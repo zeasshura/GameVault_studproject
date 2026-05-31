@@ -1,0 +1,72 @@
+services:
+  # ─── PostgreSQL Database ───────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: gamevault_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-gamevault}
+      POSTGRES_USER: ${DB_USER:-gamevault}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-gamevault_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-gamevault}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Django Backend ────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gamevault_backend
+    restart: unless-stopped
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-super-secret-django-key-change-in-production}
+      DEBUG: ${DEBUG:-True}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-gamevault}
+      DB_USER: ${DB_USER:-gamevault}
+      DB_PASSWORD: ${DB_PASSWORD:-gamevault_secret}
+      RAWG_API_KEY: ${RAWG_API_KEY:-}
+      ALLOWED_HOSTS: "*"
+    volumes:
+      - ./backend:/app
+      - media_files:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py makemigrations users games reviews collections &&
+             python manage.py migrate --noinput &&
+             python manage.py populate_rawg --pages 25 &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # ─── React Frontend ────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gamevault_frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+      BACKEND_URL: http://backend:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  media_files:
