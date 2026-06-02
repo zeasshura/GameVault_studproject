@@ -34,15 +34,19 @@ const RatingStars: React.FC<RatingStarsProps> = ({
 
     const starClass = filled || halfFilled ? 'star-filled' : 'star-empty';
 
-    const handleClick = () => {
-      if (interactive && onChange) {
-        // Convert back to 0-10: clicking star N = N*2
-        onChange(index * 2);
-      }
+    const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (!interactive) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const isHalf = e.clientX - rect.left < rect.width / 2;
+      setHovered(index - (isHalf ? 0.5 : 0));
     };
 
-    const handleMouseEnter = () => {
-      if (interactive) setHovered(index);
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (interactive && onChange) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const isHalf = e.clientX - rect.left < rect.width / 2;
+        onChange((index - (isHalf ? 0.5 : 0)) * 2);
+      }
     };
 
     return (
@@ -50,7 +54,7 @@ const RatingStars: React.FC<RatingStarsProps> = ({
         key={index}
         type="button"
         onClick={handleClick}
-        onMouseEnter={handleMouseEnter}
+        onMouseMove={handleMouseMove}
         onMouseLeave={() => interactive && setHovered(null)}
         disabled={!interactive}
         className={`${starClass} transition-all duration-100 ${

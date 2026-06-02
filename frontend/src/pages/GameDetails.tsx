@@ -480,7 +480,13 @@ const GameDetails: React.FC = () => {
             {reviews
               .filter((r) => r.user.id !== user?.id)
               .map((review) => (
-                <ReviewCard key={review.id} review={review} isOwner={false} />
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  isOwner={false}
+                  isAdmin={user?.role === 'admin'}
+                  onDelete={() => handleDeleteReview(review.id)}
+                />
               ))}
           </div>
         )}
@@ -492,11 +498,12 @@ const GameDetails: React.FC = () => {
 interface ReviewCardProps {
   review: Review;
   isOwner: boolean;
+  isAdmin?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
 }
 
-const ReviewCard: React.FC<ReviewCardProps> = ({ review, isOwner, onEdit, onDelete }) => {
+const ReviewCard: React.FC<ReviewCardProps> = ({ review, isOwner, isAdmin, onEdit, onDelete }) => {
   const dateStr = new Date(review.created_at).toLocaleDateString('ru-RU', {
     year: 'numeric',
     month: 'long',
@@ -541,24 +548,28 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review, isOwner, onEdit, onDele
             <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
             <span className="text-sm font-bold text-yellow-400">{review.score}</span>
           </div>
-          {isOwner && (
-            <div className="flex gap-1">
-              <button
-                id={`edit-review-${review.id}`}
-                onClick={onEdit}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-primary-300 hover:bg-primary-500/10 transition-colors"
-                aria-label="Редактировать рецензию"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-              <button
-                id={`delete-review-${review.id}`}
-                onClick={onDelete}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                aria-label="Удалить рецензию"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+          {(isOwner || isAdmin) && (
+            <div className="flex gap-1 ml-2">
+              {isOwner && onEdit && (
+                <button
+                  id={`edit-review-${review.id}`}
+                  onClick={onEdit}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-primary-300 hover:bg-primary-500/10 transition-colors"
+                  aria-label="Редактировать рецензию"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  id={`delete-review-${review.id}`}
+                  onClick={onDelete}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  aria-label="Удалить рецензию"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </div>
           )}
         </div>

@@ -9,7 +9,7 @@ import apiClient from '../api/client';
 import LoadingSpinner from '../components/LoadingSpinner';
 import RatingStars from '../components/RatingStars';
 
-type ProfileTab = 'collections' | 'reviews';
+type ProfileTab = 'collections' | 'reviews' | 'settings';
 
 const Profile: React.FC = () => {
   const { user: currentUser, setUser: setCurrentUser } = useAuthStore();
@@ -25,10 +25,32 @@ const Profile: React.FC = () => {
   const [loadingRevs, setLoadingRevs] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(!isOwnProfile);
 
-  // Bio editing
   const [editingBio, setEditingBio] = useState(false);
   const [bioInput, setBioInput] = useState(user?.bio ?? '');
   const [savingBio, setSavingBio] = useState(false);
+
+  // Settings
+  const [settingsLogin, setSettingsLogin] = useState('');
+  const [settingsPassword, setSettingsPassword] = useState('');
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsMsg, setSettingsMsg] = useState('');
+
+  // Remove game from collection
+  const handleRemoveGame = async (collectionId: number, gameId: number) => {
+    if (!window.confirm('Удалить игру из коллекции?')) return;
+    try {
+      await collectionsApi.removeGameFromCollection(collectionId, gameId);
+      setCollections(prev => prev.map(c => {
+        if (c.id === collectionId) {
+          return { ...c, games: c.games.filter(g => g.id !== gameId) };
+        }
+        return c;
+      }));
+    } catch (e) {
+      console.error(e);
+      alert('Не удалось удалить игру из коллекции');
+    }
+  };
 
   useEffect(() => {
     if (isOwnProfile) {
@@ -39,6 +61,7 @@ const Profile: React.FC = () => {
   useEffect(() => {
     if (user) {
       setBioInput(user.bio ?? '');
+      setSettingsLogin(user.username ?? '');
     }
   }, [user]);
 
@@ -120,6 +143,41 @@ const Profile: React.FC = () => {
       // ignore
     } finally {
       setSavingBio(false);
+    }
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isOwnProfile) return;
+    setSavingSettings(true);
+    setSettingsMsg('');
+    try {
+      const payload: any = {};
+      if (settingsLogin && settingsLogin !== user?.username) {
+        payload.username = settingsLogin;
+      }
+      if (settingsPassword) {
+        payload.password = settingsPassword;
+      }
+      
+      if (Object.keys(payload).length > 0) {
+        const response = await apiClient.patch<any>('/auth/me/', payload);
+        if (response.data && user) {
+          const updatedUser = { ...user, username: response.data?.username };
+          setUserState(updatedUser);
+          if (setCurrentUser) {
+            setCurrentUser(updatedUser);
+          }
+        }
+        setSettingsMsg('Настройки успешно сохранены!');
+        setSettingsPassword(''); // Clear password
+      } else {
+        setSettingsMsg('Нет изменений для сохранения.');
+      }
+    } catch (e: any) {
+      setSettingsMsg(e.response?.data?.username?.[0] || e.response?.data?.password?.[0] || 'Ошибка при сохранении настроек');
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -252,6 +310,7 @@ const Profile: React.FC = () => {
           {[
             { id: 'collections' as ProfileTab, label: 'Коллекции', icon: <Library className="w-4 h-4" /> },
             { id: 'reviews' as ProfileTab, label: 'Рецензии', icon: <MessageSquare className="w-4 h-4" /> },
+            ...(isOwnProfile ? [{ id: 'settings' as ProfileTab, label: 'Настройки', icon: <User className="w-4 h-4" /> }] : []),
           ].map((t) => (
             <button
               key={t.id}
@@ -309,7 +368,7 @@ const Profile: React.FC = () => {
                             className="group"
                             id={`col-game-${game.id}`}
                           >
-                            <div className="aspect-[3/4] rounded-xl overflow-hidden bg-dark-100 border border-white/10 group-hover:border-primary-500/50 transition-all">
+                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-dark-100 border border-white/10 group-hover:border-primary-500/50 transition-all">
                               {game.cover_url ? (
                                 <img
                                   src={game.cover_url}
@@ -320,6 +379,19 @@ const Profile: React.FC = () => {
                                 <div className="w-full h-full flex items-center justify-center text-2xl">
                                   🎮
                                 </div>
+                              )}
+                              {isOwnProfile && (
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleRemoveGame(col.id, game.id);
+                                  }}
+                                  className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all"
+                                  title="Удалить из коллекции"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
                               )}
                             </div>
                             <p className="text-xs text-gray-500 mt-1 truncate group-hover:text-primary-300 transition-colors">
@@ -381,6 +453,49 @@ const Profile: React.FC = () => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── Settings Tab ──────────────────────────── */}
+        {tab === 'settings' && isOwnProfile && (
+          <div className="animate-fade-in glass rounded-2xl p-6 md:p-8 max-w-xl mx-auto">
+            <h2 className="text-xl font-bold text-white mb-6">Настройки аккаунта</h2>
+            <form onSubmit={handleSaveSettings} className="flex flex-col gap-5">
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Логин (Имя пользователя)</label>
+                <input
+                  type="text"
+                  value={settingsLogin}
+                  onChange={(e) => setSettingsLogin(e.target.value)}
+                  className="input-field"
+                  placeholder="Новый логин"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Новый пароль</label>
+                <input
+                  type="password"
+                  value={settingsPassword}
+                  onChange={(e) => setSettingsPassword(e.target.value)}
+                  className="input-field"
+                  placeholder="Оставьте пустым, если не хотите менять"
+                />
+              </div>
+              {settingsMsg && (
+                <div className={`text-sm ${settingsMsg.includes('ошибка') || settingsMsg.includes('уже существует') ? 'text-red-400' : 'text-green-400'}`}>
+                  {settingsMsg}
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={savingSettings}
+                className="btn-primary mt-2"
+              >
+                {savingSettings ? <LoadingSpinner size="sm" /> : null}
+                Сохранить настройки
+              </button>
+            </form>
           </div>
         )}
       </div>

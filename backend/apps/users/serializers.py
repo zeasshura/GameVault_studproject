@@ -65,14 +65,21 @@ class UserSerializer(serializers.ModelSerializer):
     """Сериализатор для чтения профиля пользователя."""
 
     is_admin = serializers.BooleanField(read_only=True)
+    password = serializers.CharField(write_only=True, required=False, style={'input_type': 'password'})
 
     class Meta:
         model = User
         fields = (
-            'id', 'username', 'email', 'first_name', 'last_name',
+            'id', 'username', 'email', 'password', 'first_name', 'last_name',
             'role', 'bio', 'avatar_url', 'is_admin', 'date_joined'
         )
         read_only_fields = ('id', 'role', 'date_joined', 'is_admin')
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+        return super().update(instance, validated_data)
 
 
 class LoginSerializer(serializers.Serializer):
