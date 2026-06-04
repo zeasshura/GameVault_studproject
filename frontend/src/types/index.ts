@@ -27,6 +27,7 @@ export interface Game {
   description: string;
   release_date: string | null;
   cover_url: string | null;
+  video_url?: string | null;
   avg_rating: number;
   genres: Genre[];
   platforms: Platform[];
@@ -39,6 +40,10 @@ export interface Review {
   game: number;
   text: string;
   score: number;
+  score_gameplay: number;
+  score_story: number;
+  score_graphics: number;
+  score_sound: number;
   created_at: string;
 }
 
@@ -90,6 +95,7 @@ export interface RawgGame {
   title: string;
   release_date: string | null;
   cover_url: string | null;
+  video_url?: string | null;
   avg_rating: number;
   genres: string[];
   platforms: string[];

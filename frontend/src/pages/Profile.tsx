@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { User, Mail, BookOpen, Star, Pencil, Check, X, Library, MessageSquare } from 'lucide-react';
+import { User, Mail, BookOpen, Pencil, Check, X, Library, MessageSquare } from 'lucide-react';
 import { collectionsApi } from '../api/collections';
-import { reviewsApi } from '../api/reviews';
 import { useAuthStore } from '../store/auth';
 import type { Collection, Review } from '../types';
 import apiClient from '../api/client';
@@ -185,7 +184,7 @@ const Profile: React.FC = () => {
 
   if (loadingProfile) {
     return (
-      <div className="min-h-screen pt-20 pb-16 flex items-center justify-center">
+      <div className="min-h-screen pt-14 pb-16 flex items-center justify-center" style={{ background: 'var(--bg)' }}>
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -193,9 +192,9 @@ const Profile: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen pt-20 pb-16 text-center">
+      <div className="min-h-screen pt-14 pb-16 text-center" style={{ background: 'var(--bg)' }}>
         <div className="section-container">
-          <h1 className="text-2xl font-bold text-white mb-4">Пользователь не найден</h1>
+          <h1 className="text-2xl font-bold mb-4" style={{ color: 'var(--text)' }}>Пользователь не найден</h1>
           <Link to="/" className="btn-primary">На главную</Link>
         </div>
       </div>
@@ -203,10 +202,10 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen pt-20 pb-16">
-      <div className="section-container">
+    <div className="min-h-screen pt-14 pb-16" style={{ background: 'var(--bg)' }}>
+      <div className="section-container py-8">
         {/* ── Profile Header ─────────────────────────── */}
-        <div className="glass rounded-3xl p-8 mb-8 animate-slide-up">
+        <div className="rounded-xl p-6 mb-6 animate-slide-up" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
           <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
             {/* Avatar */}
             <div className="flex-shrink-0">
@@ -217,7 +216,7 @@ const Profile: React.FC = () => {
                   className="w-24 h-24 rounded-2xl object-cover border-2 border-primary-500/40"
                 />
               ) : (
-                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-primary-500/30">
+                <div className="w-24 h-24 rounded-2xl flex items-center justify-center text-black text-3xl font-black" style={{ background: 'var(--accent)' }}>
                   {initials}
                 </div>
               )}
@@ -226,9 +225,9 @@ const Profile: React.FC = () => {
             {/* Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-black text-white">{user?.username}</h1>
+                <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>{user?.username}</h1>
                 {user?.role === 'admin' && (
-                  <span className="chip bg-primary-500/20 text-primary-300 border border-primary-500/30 text-xs">
+                  <span className="chip text-xs" style={{ background: 'var(--accent-dim)', color: 'var(--accent)', border: '1px solid var(--accent)' }}>
                     Администратор
                   </span>
                 )}
@@ -257,14 +256,16 @@ const Profile: React.FC = () => {
                       id="save-bio-btn"
                       onClick={handleSaveBio}
                       disabled={savingBio}
-                      className="p-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-white transition-colors"
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ background: 'var(--accent)', color: '#000' }}
                     >
                       {savingBio ? <LoadingSpinner size="sm" /> : <Check className="w-4 h-4" />}
                     </button>
                     <button
                       id="cancel-bio-btn"
                       onClick={() => { setEditingBio(false); setBioInput(user?.bio ?? ''); }}
-                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-colors"
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ background: 'var(--bg-hover)', color: 'var(--text-muted)' }}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -272,16 +273,19 @@ const Profile: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex items-start gap-2 group">
-                  <p className="text-gray-400 text-sm flex-1">
+                  <p className="text-sm flex-1" style={{ color: 'var(--text-muted)' }}>
                     {user?.bio ?? (
-                      <span className="text-gray-600 italic">Добавьте описание профиля...</span>
+                      <span className="italic" style={{ color: 'var(--text-dim)' }}>Добавьте описание профиля...</span>
                     )}
                   </p>
                   {isOwnProfile && (
                     <button
                       id="edit-bio-btn"
                       onClick={() => { setEditingBio(true); setBioInput(user?.bio ?? ''); }}
-                      className="p-1.5 rounded-lg text-gray-600 hover:text-primary-400 hover:bg-primary-500/10 transition-all opacity-0 group-hover:opacity-100"
+                      className="p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                      style={{ color: 'var(--text-dim)' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-dim)')}
                       aria-label="Редактировать описание"
                     >
                       <Pencil className="w-4 h-4" />
@@ -294,19 +298,19 @@ const Profile: React.FC = () => {
             {/* Stats */}
             <div className="flex sm:flex-col gap-6 sm:gap-4 text-center sm:text-right">
               <div>
-                <div className="text-2xl font-black text-white">{collections.length}</div>
-                <div className="text-xs text-gray-500">Коллекций</div>
+                <div className="text-2xl font-black" style={{ color: 'var(--text)' }}>{collections.length}</div>
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Коллекций</div>
               </div>
               <div>
-                <div className="text-2xl font-black text-white">{reviews.length}</div>
-                <div className="text-xs text-gray-500">Рецензий</div>
+                <div className="text-2xl font-black" style={{ color: 'var(--text)' }}>{reviews.length}</div>
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Рецензий</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* ── Tabs ───────────────────────────────────── */}
-        <div className="flex gap-1 mb-6 glass rounded-2xl p-1.5 w-fit">
+        <div className="flex gap-1 mb-6 rounded-xl p-1 w-fit" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
           {[
             { id: 'collections' as ProfileTab, label: 'Коллекции', icon: <Library className="w-4 h-4" /> },
             { id: 'reviews' as ProfileTab, label: 'Рецензии', icon: <MessageSquare className="w-4 h-4" /> },
@@ -316,11 +320,11 @@ const Profile: React.FC = () => {
               key={t.id}
               id={`tab-${t.id}`}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                ${tab === t.id
-                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20'
-                  : 'text-gray-400 hover:text-gray-200'
-                }`}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+              style={tab === t.id
+                ? { background: 'var(--accent)', color: '#000' }
+                : { color: 'var(--text-muted)' }
+              }
             >
               {t.icon}
               {t.label}
@@ -348,11 +352,11 @@ const Profile: React.FC = () => {
             ) : (
               <div className="flex flex-col gap-6">
                 {collections.map((col) => (
-                  <div key={col.id} className="glass rounded-2xl p-6" id={`collection-${col.id}`}>
+                  <div key={col.id} className="rounded-xl p-5" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }} id={`collection-${col.id}`}>
                     <div className="flex items-center gap-3 mb-4">
-                      <BookOpen className="w-5 h-5 text-primary-400" />
-                      <h3 className="text-lg font-bold text-white">{col.name}</h3>
-                      <span className="chip bg-white/5 text-gray-500 border border-white/10 text-xs">
+                      <BookOpen className="w-5 h-5" style={{ color: 'var(--accent)' }} />
+                      <h3 className="text-lg font-bold" style={{ color: 'var(--text)' }}>{col.name}</h3>
+                      <span className="chip text-xs" style={{ background: 'var(--bg-card)', color: 'var(--text-dim)', border: '1px solid var(--border)' }}>
                         {col.games.length} {col.games.length === 1 ? 'игра' : 'игр'}
                       </span>
                     </div>
@@ -368,7 +372,7 @@ const Profile: React.FC = () => {
                             className="group"
                             id={`col-game-${game.id}`}
                           >
-                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-dark-100 border border-white/10 group-hover:border-primary-500/50 transition-all">
+                            <div className="relative aspect-[3/4] rounded-lg overflow-hidden transition-all" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                               {game.cover_url ? (
                                 <img
                                   src={game.cover_url}
@@ -387,14 +391,15 @@ const Profile: React.FC = () => {
                                     e.stopPropagation();
                                     handleRemoveGame(col.id, game.id);
                                   }}
-                                  className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all"
+                                  className="absolute top-1.5 right-1.5 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                                  style={{ background: 'rgba(0,0,0,0.7)', color: '#fff' }}
                                   title="Удалить из коллекции"
                                 >
                                   <X className="w-3 h-3" />
                                 </button>
                               )}
                             </div>
-                            <p className="text-xs text-gray-500 mt-1 truncate group-hover:text-primary-300 transition-colors">
+                            <p className="text-xs mt-1 truncate" style={{ color: 'var(--text-muted)' }}>
                               {game.title}
                             </p>
                           </Link>
@@ -428,22 +433,45 @@ const Profile: React.FC = () => {
             ) : (
               <div className="flex flex-col gap-4">
                 {reviews.map((review) => (
-                  <div key={review.id} className="glass rounded-2xl p-5" id={`my-review-${review.id}`}>
+                  <div key={review.id} className="rounded-xl p-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }} id={`my-review-${review.id}`}>
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                        <span className="font-bold text-yellow-400">{review.score}/10</span>
+                        <span
+                          className="text-xs font-bold px-2 py-0.5 rounded"
+                          style={{ background: review.score >= 8 ? '#6dc849' : review.score >= 6 ? '#f5c518' : '#ff6347', color: review.score >= 6 ? '#000' : '#fff' }}
+                        >
+                          {review.score}/10
+                        </span>
                         <RatingStars rating={review.score} size="sm" />
                       </div>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs" style={{ color: 'var(--text-dim)' }}>
                         {new Date(review.created_at).toLocaleDateString('ru-RU')}
                       </span>
                     </div>
-                    <p className="text-gray-400 text-sm leading-relaxed">{review.text}</p>
+                    <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--text-muted)' }}>{review.text}</p>
+                    <div className="flex flex-wrap gap-3 mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>Геймплей</span>
+                        <span className="text-xs font-bold" style={{ color: review.score_gameplay >= 8 ? '#6dc849' : review.score_gameplay >= 6 ? '#f5c518' : '#ff6347' }}>{review.score_gameplay}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>Сюжет</span>
+                        <span className="text-xs font-bold" style={{ color: review.score_story >= 8 ? '#6dc849' : review.score_story >= 6 ? '#f5c518' : '#ff6347' }}>{review.score_story}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>Графика</span>
+                        <span className="text-xs font-bold" style={{ color: review.score_graphics >= 8 ? '#6dc849' : review.score_graphics >= 6 ? '#f5c518' : '#ff6347' }}>{review.score_graphics}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>Звук</span>
+                        <span className="text-xs font-bold" style={{ color: review.score_sound >= 8 ? '#6dc849' : review.score_sound >= 6 ? '#f5c518' : '#ff6347' }}>{review.score_sound}</span>
+                      </div>
+                    </div>
                     <div className="mt-3">
                       <Link
                         to={`/games/${review.game}`}
-                        className="text-xs text-primary-400 hover:text-primary-300 transition-colors"
+                        className="text-xs font-medium transition-colors"
+                        style={{ color: 'var(--accent)' }}
                         id={`review-game-link-${review.id}`}
                       >
                         Перейти к игре →
@@ -458,11 +486,11 @@ const Profile: React.FC = () => {
 
         {/* ── Settings Tab ──────────────────────────── */}
         {tab === 'settings' && isOwnProfile && (
-          <div className="animate-fade-in glass rounded-2xl p-6 md:p-8 max-w-xl mx-auto">
-            <h2 className="text-xl font-bold text-white mb-6">Настройки аккаунта</h2>
+          <div className="animate-fade-in rounded-xl p-6 max-w-xl mx-auto" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+            <h2 className="text-xl font-bold mb-6" style={{ color: 'var(--text)' }}>Настройки аккаунта</h2>
             <form onSubmit={handleSaveSettings} className="flex flex-col gap-5">
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Логин (Имя пользователя)</label>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>Логин (Имя пользователя)</label>
                 <input
                   type="text"
                   value={settingsLogin}
@@ -473,7 +501,7 @@ const Profile: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Новый пароль</label>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>Новый пароль</label>
                 <input
                   type="password"
                   value={settingsPassword}
@@ -483,7 +511,7 @@ const Profile: React.FC = () => {
                 />
               </div>
               {settingsMsg && (
-                <div className={`text-sm ${settingsMsg.includes('ошибка') || settingsMsg.includes('уже существует') ? 'text-red-400' : 'text-green-400'}`}>
+                <div className="text-sm" style={{ color: settingsMsg.includes('ошибка') || settingsMsg.includes('уже существует') ? 'var(--red)' : 'var(--accent)' }}>
                   {settingsMsg}
                 </div>
               )}

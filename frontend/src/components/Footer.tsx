@@ -6,25 +6,29 @@ const Footer: React.FC = () => {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-white/10 bg-black/20 backdrop-blur-sm mt-auto">
-      <div className="section-container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <footer style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border)' }}>
+      <div className="section-container py-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
           {/* Brand */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
-                <Gamepad2 className="w-4 h-4 text-white" />
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{ background: 'var(--accent)' }}
+              >
+                <Gamepad2 className="w-3.5 h-3.5 text-black" />
               </div>
-              <span className="text-lg font-bold gradient-text">GameVault</span>
+              <span className="text-base font-bold" style={{ color: 'var(--text)' }}>GameVault</span>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs">
-              Ваша персональная игровая библиотека. Открывайте, отслеживайте и оценивайте видеоигры.
+            <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'var(--text-muted)' }}>
+              Ваша персональная игровая библиотека. Открывайте, отслеживайте и оценивайте игры.
             </p>
           </div>
 
-          {/* Quick Links */}
+          {/* Navigation */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-dim)' }}>
               Навигация
             </h3>
             <ul className="flex flex-col gap-2">
@@ -37,7 +41,10 @@ const Footer: React.FC = () => {
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="text-sm text-gray-500 hover:text-primary-400 transition-colors duration-200"
+                    className="text-sm transition-colors"
+                    style={{ color: 'var(--text-muted)' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
                   >
                     {link.label}
                   </Link>
@@ -45,36 +52,6 @@ const Footer: React.FC = () => {
               ))}
             </ul>
           </div>
-
-          {/* Info */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">
-              Проект
-            </h3>
-            <ul className="flex flex-col gap-2">
-              <li>
-                <a
-                  href="https://github.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary-400 transition-colors duration-200"
-                >
-                  <Github className="w-4 h-4" />
-                  GitHub
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Bottom Bar */}
-        <div className="border-t border-white/5 mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-600 dark:text-gray-500">
-            © {year} GameVault. Все права защищены.
-          </p>
-          <p className="text-xs text-gray-600 dark:text-gray-500 flex items-center gap-1">
-            Сделано с <Heart className="w-3 h-3 text-red-500 fill-red-500" /> для геймеров
-          </p>
         </div>
       </div>
     </footer>

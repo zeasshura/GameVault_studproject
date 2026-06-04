@@ -28,7 +28,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
 
   initialize: () => {
     const saved = localStorage.getItem(THEME_KEY);
-    const isDark = saved ? saved === 'dark' : true; // default to dark
+    const isDark = saved ? saved === 'dark' : true; // По умолчанию темная (стиль RAWG)
     applyTheme(isDark);
     set({ isDark });
   },

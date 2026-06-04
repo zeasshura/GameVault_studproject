@@ -12,6 +12,7 @@ import requests
 import defusedxml.ElementTree as ET
 from django.conf import settings
 from django.db import transaction
+from django.utils.html import strip_tags
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -33,11 +34,6 @@ logger = logging.getLogger(__name__)
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet для управления жанрами.
-    Чтение — для всех, запись — только для администраторов.
-    """
-
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = [IsAdminOrReadOnly]
@@ -52,11 +48,6 @@ class GenreViewSet(viewsets.ModelViewSet):
 
 
 class PlatformViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet для управления платформами.
-    Чтение — для всех, запись — только для администраторов.
-    """
-
     queryset = Platform.objects.all()
     serializer_class = PlatformSerializer
     permission_classes = [IsAdminOrReadOnly]
@@ -71,17 +62,6 @@ class PlatformViewSet(viewsets.ModelViewSet):
 
 
 class GameViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet для управления играми.
-
-    Поддерживает:
-    - CRUD операции
-    - Фильтрацию по жанру, платформе, году выхода, минимальному рейтингу
-    - Текстовый поиск по названию
-    - Интеграция с RAWG API
-    - Загрузка игр из CSV/XML файлов
-    """
-
     queryset = Game.objects.all().prefetch_related('genres', 'platforms')
     permission_classes = [IsAdminOrReadOnly]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
@@ -162,12 +142,14 @@ class GameViewSet(viewsets.ModelViewSet):
                 try:
                     response = requests.get(
                         f'{settings.RAWG_BASE_URL}/games/{instance.rawg_id}',
-                        params={'key': api_key},
+                        params={'key': api_key, 'lang': 'ru'},
                         timeout=10
                     )
                     if response.status_code == 200:
                         data = response.json()
-                        desc = data.get('description_raw', '') or data.get('description', '')
+                        raw_desc = data.get('description_raw') or ''
+                        html_desc = data.get('description') or ''
+                        desc = raw_desc.strip() if raw_desc else strip_tags(html_desc).strip()
                         if desc:
                             instance.description = desc
                             instance.save(update_fields=['description'])
@@ -221,7 +203,7 @@ class GameViewSet(viewsets.ModelViewSet):
         try:
             response = requests.get(
                 f'{settings.RAWG_BASE_URL}/games',
-                params={'key': api_key, 'search': query, 'page_size': 20},
+                params={'key': api_key, 'search': query, 'page_size': 20, 'lang': 'ru'},
                 headers={'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'},
                 timeout=10
             )
@@ -301,7 +283,7 @@ class GameViewSet(viewsets.ModelViewSet):
         try:
             response = requests.get(
                 f'{settings.RAWG_BASE_URL}/games/{rawg_id}',
-                params={'key': api_key},
+                params={'key': api_key, 'lang': 'ru'},
                 headers={'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'},
                 timeout=10
             )
@@ -324,14 +306,33 @@ class GameViewSet(viewsets.ModelViewSet):
             if bg_image and 'media.rawg.io/media/' in bg_image:
                 bg_image = bg_image.replace('media.rawg.io/media/', 'media.rawg.io/media/crop/600/400/')
 
+            raw_desc = data.get('description_raw') or ''
+            html_desc = data.get('description') or ''
+            desc = raw_desc.strip() if raw_desc else strip_tags(html_desc).strip()
+
+            video_url = None
+            try:
+                movies_res = requests.get(
+                    f'{settings.RAWG_BASE_URL}/games/{rawg_id}/movies',
+                    params={'key': api_key},
+                    timeout=5
+                )
+                if movies_res.status_code == 200:
+                    movies_data = movies_res.json()
+                    if movies_data.get('results'):
+                        video_url = movies_data['results'][0]['data'].get('480') or movies_data['results'][0]['data'].get('max')
+            except Exception:
+                pass
+
             # Создание или обновление игры
             game, created = Game.objects.update_or_create(
                 rawg_id=data['id'],
                 defaults={
                     'title': data.get('name', ''),
-                    'description': data.get('description_raw', '') or data.get('description', ''),
+                    'description': desc,
                     'release_date': data.get('released') or None,
                     'cover_url': bg_image or None,
+                    'video_url': video_url,
                     'avg_rating': round(data.get('rating', 0.0) * 2, 2),
                     'initial_rating': round(data.get('rating', 0.0) * 2, 2),
                     'initial_rating_count': data.get('ratings_count', 0),

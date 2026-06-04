@@ -1,7 +1,3 @@
-"""
-Django settings for GameVault project.
-"""
-
 import os
 from pathlib import Path
 from datetime import timedelta

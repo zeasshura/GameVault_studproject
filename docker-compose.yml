@@ -1,5 +1,4 @@
 services:
-  # ─── PostgreSQL Database ───────────────────────────────────────────────────
   db:
     image: postgres:15-alpine
     container_name: gamevault_db
@@ -18,7 +17,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ─── Django Backend ────────────────────────────────────────────────────────
   backend:
     build:
       context: ./backend
@@ -46,10 +44,9 @@ services:
     command: >
       sh -c "python manage.py makemigrations users games reviews collections &&
              python manage.py migrate --noinput &&
-             python manage.py populate_rawg --pages 25 &&
+             python manage.py populate_rawg --pages 50 &&
              python manage.py runserver 0.0.0.0:8000"
 
-  # ─── React Frontend ────────────────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend

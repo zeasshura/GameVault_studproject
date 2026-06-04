@@ -41,6 +41,7 @@ class Command(BaseCommand):
                         'page': page,
                         'page_size': 20,
                         'ordering': '-rating',
+                        'lang': 'ru',
                     },
                     timeout=10
                 )
@@ -73,6 +74,7 @@ class Command(BaseCommand):
                             cover_url=game_data.get('background_image') or None,
                             avg_rating=round(game_data.get('rating', 0.0) * 2, 2),
                             initial_rating=round(game_data.get('rating', 0.0) * 2, 2),
+                            initial_rating_count=game_data.get('ratings_count', 0),
                         )
                         
                         for genre_data in game_data.get('genres', []):

@@ -10,7 +10,6 @@ const apiClient = axios.create({
   },
 });
 
-// ── Request Interceptor ──────────────────────────────────────
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -22,7 +21,6 @@ apiClient.interceptors.request.use(
   (error: AxiosError) => Promise.reject(error)
 );
 
-// ── Response Interceptor (token refresh on 401) ──────────────
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (token: string) => void;

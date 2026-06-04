@@ -1,108 +1,148 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Star } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import type { Game } from '../types';
-import RatingStars from './RatingStars';
 
 interface GameCardProps {
   game: Game;
 }
 
+/** RAWG-style game card: 16:9 landscape cover, green rating badge, dark surface */
 const GameCard: React.FC<GameCardProps> = ({ game }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (isHovered && videoRef.current) {
+      videoRef.current.play().catch(() => {}); // catch autoplay restrictions
+    } else if (!isHovered && videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, [isHovered]);
+
   const releaseYear = game.release_date
     ? new Date(game.release_date).getFullYear()
     : null;
 
+  const ratingColor = (r: number) => {
+    if (r >= 8) return '#6dc849';   // green
+    if (r >= 6) return '#f5c518';   // yellow
+    if (r > 0)  return '#ff6347';   // red-orange
+    return 'transparent';
+  };
+
   return (
     <Link
       to={`/games/${game.id}`}
-      className="group block glass-card overflow-hidden h-full"
+      className="group block glass-card h-full"
       aria-label={`Перейти к игре ${game.title}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Cover Image */}
-      <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-br from-primary-900/40 to-dark-300">
+      {/* Cover — 16:9 landscape, like RAWG */}
+      <div className="relative aspect-video overflow-hidden"
+           style={{ background: '#2a2a2a' }}>
         {game.cover_url ? (
           <img
             src={game.cover_url}
             alt={`Обложка ${game.title}`}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isHovered && game.video_url ? 'opacity-0' : 'opacity-100'}`}
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-primary-900/30 to-accent-900/20">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500/30 to-accent-500/30 flex items-center justify-center">
-              <span className="text-2xl">🎮</span>
-            </div>
-            <span className="text-xs text-gray-500 font-medium">Нет изображения</span>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2"
+               style={{ background: '#2a2a2a' }}>
+            <span className="text-3xl">🎮</span>
+            <span className="text-xs" style={{ color: 'var(--text-dim)' }}>Нет изображения</span>
           </div>
         )}
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+        {game.video_url && (
+          <video
+            ref={videoRef}
+            src={game.video_url}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+            muted
+            loop
+            playsInline
+          />
+        )}
 
-        {/* Rating Badge */}
-        <div className="absolute top-3 right-3">
-          <div className="flex items-center gap-1 bg-black/60 backdrop-blur-sm border border-yellow-500/30 rounded-lg px-2.5 py-1">
-            <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-            <span className="text-xs font-bold text-yellow-400">
-              {game.avg_rating > 0 ? game.avg_rating.toFixed(1) : '—'}
-            </span>
+        {/* Rating badge — top-left, RAWG style */}
+        {game.avg_rating > 0 && (
+          <div
+            className="absolute top-2 left-2 text-xs font-bold rounded px-1.5 py-0.5"
+            style={{
+              background: ratingColor(game.avg_rating),
+              color: game.avg_rating >= 6 ? '#000' : '#fff',
+              minWidth: '2rem',
+              textAlign: 'center',
+            }}
+          >
+            {game.avg_rating.toFixed(1)}
           </div>
-        </div>
-
-        {/* Bottom Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          {/* Genres */}
-          {game.genres.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-2">
-              {game.genres.slice(0, 2).map((genre) => (
-                <span key={genre.id} className="chip-primary text-[10px] py-0.5 px-2">
-                  {genre.name}
-                </span>
-              ))}
-              {game.genres.length > 2 && (
-                <span className="chip bg-white/10 text-gray-300 text-[10px] py-0.5 px-2">
-                  +{game.genres.length - 2}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Title */}
-          <h3 className="text-white font-bold text-base leading-tight line-clamp-2 group-hover:text-primary-300 transition-colors duration-200">
-            {game.title}
-          </h3>
-        </div>
+        )}
       </div>
 
-      {/* Card Body */}
-      <div className="p-4">
-        {/* Stars */}
-        <div className="flex items-center justify-between mb-3">
-          <RatingStars rating={game.avg_rating} size="sm" />
-          {releaseYear && (
-            <div className="flex items-center gap-1 text-xs text-gray-500">
-              <Calendar className="w-3 h-3" />
-              <span>{releaseYear}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Platforms */}
+      {/* Card body */}
+      <div className="p-3">
+        {/* Platforms row */}
         {game.platforms.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {game.platforms.slice(0, 3).map((platform) => (
-              <span key={platform.id} className="chip-accent text-[10px] py-0.5 px-2">
-                {platform.name}
+          <div className="flex flex-wrap gap-1 mb-2">
+            {game.platforms.slice(0, 3).map((p) => (
+              <span
+                key={p.id}
+                className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                style={{ background: 'var(--bg-hover)', color: 'var(--text-muted)' }}
+              >
+                {p.name}
               </span>
             ))}
             {game.platforms.length > 3 && (
-              <span className="chip bg-white/5 text-gray-400 text-[10px] py-0.5 px-2">
+              <span
+                className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                style={{ background: 'var(--bg-hover)', color: 'var(--text-dim)' }}
+              >
                 +{game.platforms.length - 3}
               </span>
             )}
           </div>
         )}
+
+        {/* Title */}
+        <h3
+          className="font-bold text-sm leading-snug mb-1.5 line-clamp-2 transition-colors duration-150"
+          style={{ color: 'var(--text)' }}
+        >
+          {game.title}
+        </h3>
+
+        {/* Genre + year row */}
+        <div className="flex items-center justify-between">
+          <div className="flex flex-wrap gap-1">
+            {game.genres.slice(0, 2).map((g) => (
+              <span
+                key={g.id}
+                className="text-[10px]"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                {g.name}
+              </span>
+            ))}
+            {game.genres.length > 2 && (
+              <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>
+                +{game.genres.length - 2}
+              </span>
+            )}
+          </div>
+          {releaseYear && (
+            <div className="flex items-center gap-0.5" style={{ color: 'var(--text-dim)' }}>
+              <Calendar className="w-3 h-3" />
+              <span className="text-[10px]">{releaseYear}</span>
+            </div>
+          )}
+        </div>
       </div>
     </Link>
   );

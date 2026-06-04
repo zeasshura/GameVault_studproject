@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import {
   Gamepad2,
-  Moon,
-  Sun,
   Menu,
   X,
   LogIn,
@@ -12,9 +10,13 @@ import {
   User,
   Shield,
   ChevronDown,
+  Search,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { useThemeStore } from '../store/theme';
+
 
 const Header: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -23,18 +25,10 @@ const Header: React.FC = () => {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [searchVal, setSearchVal] = useState('');
 
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Scroll detection for header style
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Close user menu on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -52,151 +46,224 @@ const Header: React.FC = () => {
     navigate('/');
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchVal.trim()) {
+      navigate(`/games?search=${encodeURIComponent(searchVal.trim())}`);
+      setSearchVal('');
+      setMobileOpen(false);
+    }
+  };
+
   const navLinks = [
     { to: '/', label: 'Главная', exact: true },
     { to: '/games', label: 'Каталог', exact: false },
   ];
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `relative px-1 py-0.5 text-sm font-medium transition-colors duration-200
-    after:absolute after:bottom-0 after:left-0 after:h-0.5 after:rounded-full
-    after:transition-all after:duration-300
-    ${
-      isActive
-        ? 'text-primary-400 after:w-full after:bg-primary-400'
-        : 'text-gray-400 hover:text-primary-300 after:w-0 hover:after:w-full after:bg-primary-400'
+    `text-sm font-medium transition-colors duration-150 ${
+      isActive ? 'text-white' : 'hover:text-white'
     }`;
+
+  const activeDot = (isActive: boolean) => isActive
+    ? 'relative after:absolute after:-bottom-0.5 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-[var(--accent)]'
+    : '';
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'glass border-b border-white/10 shadow-xl shadow-black/20'
-          : 'bg-transparent'
-      }`}
+      className="fixed top-0 left-0 right-0 z-50"
+      style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}
     >
       <div className="section-container">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-14 gap-4">
+
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2 group"
+            className="flex items-center gap-2 flex-shrink-0"
             onClick={() => setMobileOpen(false)}
           >
-            <div className="relative">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-lg group-hover:shadow-primary-500/40 transition-shadow duration-300">
-                <Gamepad2 className="w-5 h-5 text-white" />
-              </div>
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 blur-md opacity-0 group-hover:opacity-60 transition-opacity duration-300" />
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'var(--accent)' }}
+            >
+              <Gamepad2 className="w-4.5 h-4.5 text-black" style={{ width: 18, height: 18 }} />
             </div>
-            <span className="text-lg font-bold gradient-text hidden sm:block">GameVault</span>
+            <span className="text-base font-bold hidden sm:block" style={{ color: 'var(--text)' }}>
+              GameVault
+            </span>
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-6">
+          {/* Search bar — center, like RAWG */}
+          <form
+            onSubmit={handleSearch}
+            className="hidden md:flex flex-1 max-w-md relative"
+          >
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+              style={{ color: 'var(--text-dim)' }}
+            />
+            <input
+              id="header-search"
+              type="text"
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
+              placeholder="Поиск игр..."
+              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg outline-none transition-colors"
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                color: 'var(--text)',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+              onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+            />
+          </form>
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-5">
             {navLinks.map((link) => (
-              <NavLink key={link.to} to={link.to} end={link.exact} className={navLinkClass}>
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.exact}
+                className={({ isActive }) =>
+                  `${navLinkClass({ isActive })} ${activeDot(isActive)}`
+                }
+                style={{ color: 'var(--text-muted)' }}
+              >
                 {link.label}
               </NavLink>
             ))}
             {isAuthenticated && (
-              <NavLink to="/profile" className={navLinkClass}>
+              <NavLink
+                to="/profile"
+                className={({ isActive }) =>
+                  `${navLinkClass({ isActive })} ${activeDot(isActive)}`
+                }
+                style={{ color: 'var(--text-muted)' }}
+              >
                 Профиль
               </NavLink>
             )}
             {isAuthenticated && user?.role === 'admin' && (
-              <NavLink to="/admin" className={navLinkClass}>
-                <span className="flex items-center gap-1">
-                  <Shield className="w-3.5 h-3.5" />
-                  Админка
-                </span>
+              <NavLink
+                to="/admin"
+                className={({ isActive }) =>
+                  `${navLinkClass({ isActive })} ${activeDot(isActive)} flex items-center gap-1`
+                }
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                Админка
               </NavLink>
             )}
           </nav>
 
-          {/* Right Controls */}
-          <div className="flex items-center gap-2">
-            {/* Theme Toggle */}
+          {/* Right controls */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Theme toggle */}
             <button
               id="theme-toggle"
               onClick={toggle}
-              className="p-2 rounded-xl text-gray-400 hover:text-primary-400 hover:bg-primary-500/10 transition-all duration-200"
-              aria-label={isDark ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'}
+              className="p-2 rounded-lg transition-colors hidden sm:block"
+              style={{ color: 'var(--text-muted)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+              aria-label={isDark ? 'Светлая тема' : 'Тёмная тема'}
             >
-              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {isDark ? <Sun className="w-4.5 h-4.5" style={{ width: 18, height: 18 }} />
+                       : <Moon className="w-4.5 h-4.5" style={{ width: 18, height: 18 }} />}
             </button>
 
-            {/* Desktop Auth */}
+            {/* Desktop auth */}
             <div className="hidden md:flex items-center gap-2">
               {isAuthenticated ? (
                 <div className="relative" ref={userMenuRef}>
                   <button
                     id="user-menu-btn"
                     onClick={() => setUserMenuOpen((p) => !p)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/5 transition-all duration-200"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors"
+                    style={{ background: 'var(--bg-card)' }}
                   >
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-sm font-bold">
+                    <div
+                      className="w-7 h-7 rounded-md flex items-center justify-center text-black text-xs font-bold flex-shrink-0"
+                      style={{ background: 'var(--accent)' }}
+                    >
                       {user?.username?.[0]?.toUpperCase() ?? 'U'}
                     </div>
-                    <span className="text-sm font-medium text-gray-300 max-w-[100px] truncate">
+                    <span className="text-sm font-medium max-w-[80px] truncate" style={{ color: 'var(--text)' }}>
                       {user?.username}
                     </span>
                     <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
-                        userMenuOpen ? 'rotate-180' : ''
-                      }`}
+                      className={`w-3.5 h-3.5 transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`}
+                      style={{ color: 'var(--text-muted)' }}
                     />
                   </button>
 
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 glass shadow-xl rounded-xl overflow-hidden animate-fade-in">
+                    <div
+                      className="absolute right-0 mt-1 w-44 rounded-lg overflow-hidden animate-fade-in z-50"
+                      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                    >
                       <Link
                         to="/profile"
                         onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-primary-500/10 hover:text-primary-300 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors"
+                        style={{ color: 'var(--text-muted)' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--text)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
                       >
-                        <User className="w-4 h-4" />
-                        Профиль
+                        <User className="w-4 h-4" /> Профиль
                       </Link>
                       {user?.role === 'admin' && (
                         <Link
                           to="/admin"
                           onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-primary-500/10 hover:text-primary-300 transition-colors"
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors"
+                          style={{ color: 'var(--text-muted)' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--text)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
                         >
-                          <Shield className="w-4 h-4" />
-                          Панель админа
+                          <Shield className="w-4 h-4" /> Панель админа
                         </Link>
                       )}
-                      <div className="border-t border-white/10" />
+                      <div style={{ borderTop: '1px solid var(--border)' }} />
                       <button
                         onClick={handleLogout}
-                        className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm transition-colors"
+                        style={{ color: 'var(--red)' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
-                        <LogOut className="w-4 h-4" />
-                        Выйти
+                        <LogOut className="w-4 h-4" /> Выйти
                       </button>
                     </div>
                   )}
                 </div>
               ) : (
                 <>
-                  <Link to="/login" className="btn-secondary py-2 px-4 text-sm">
-                    <LogIn className="w-4 h-4" />
+                  <Link
+                    to="/login"
+                    className="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
+                    style={{ color: 'var(--text-muted)' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+                  >
                     Войти
                   </Link>
-                  <Link to="/register" className="btn-primary py-2 px-4 text-sm">
-                    <UserPlus className="w-4 h-4" />
+                  <Link to="/register" className="btn-primary py-1.5 px-4 text-xs">
                     Регистрация
                   </Link>
                 </>
               )}
             </div>
 
-            {/* Mobile Hamburger */}
+            {/* Mobile hamburger */}
             <button
               id="mobile-menu-btn"
-              className="md:hidden p-2 rounded-xl text-gray-400 hover:text-primary-400 hover:bg-primary-500/10 transition-all"
+              className="md:hidden p-2 rounded-lg transition-colors"
+              style={{ color: 'var(--text-muted)' }}
               onClick={() => setMobileOpen((p) => !p)}
               aria-label="Открыть меню"
             >
@@ -206,10 +273,33 @@ const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden glass border-t border-white/10 animate-fade-in">
-          <div className="section-container py-4 flex flex-col gap-1">
+        <div
+          className="md:hidden animate-fade-in"
+          style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-surface)' }}
+        >
+          {/* Mobile search */}
+          <form onSubmit={handleSearch} className="px-4 py-3 relative">
+            <Search
+              className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+              style={{ color: 'var(--text-dim)' }}
+            />
+            <input
+              type="text"
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
+              placeholder="Поиск игр..."
+              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg outline-none"
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                color: 'var(--text)',
+              }}
+            />
+          </form>
+
+          <div className="px-4 pb-4 flex flex-col gap-1">
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
@@ -217,12 +307,11 @@ const Header: React.FC = () => {
                 end={link.exact}
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
-                  `px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-primary-500/20 text-primary-300'
-                      : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                  `px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? 'text-white' : ''
                   }`
                 }
+                style={{ color: 'var(--text-muted)' }}
               >
                 {link.label}
               </NavLink>
@@ -232,12 +321,9 @@ const Header: React.FC = () => {
                 to="/profile"
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
-                  `px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-primary-500/20 text-primary-300'
-                      : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
-                  }`
+                  `px-3 py-2.5 rounded-lg text-sm font-medium ${isActive ? 'text-white' : ''}`
                 }
+                style={{ color: 'var(--text-muted)' }}
               >
                 Профиль
               </NavLink>
@@ -247,47 +333,50 @@ const Header: React.FC = () => {
                 to="/admin"
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
-                  `px-4 py-3 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 ${
-                    isActive
-                      ? 'bg-primary-500/20 text-primary-300'
-                      : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
-                  }`
+                  `px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 ${isActive ? 'text-white' : ''}`
                 }
+                style={{ color: 'var(--text-muted)' }}
               >
-                <Shield className="w-4 h-4" />
-                Админка
+                <Shield className="w-4 h-4" /> Админка
               </NavLink>
             )}
-            <div className="border-t border-white/10 mt-2 pt-2">
-              {isAuthenticated ? (
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 w-full px-4 py-3 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Выйти
-                </button>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <Link
-                    to="/login"
-                    onClick={() => setMobileOpen(false)}
-                    className="btn-secondary py-2.5 text-sm"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    Войти
-                  </Link>
-                  <Link
-                    to="/register"
-                    onClick={() => setMobileOpen(false)}
-                    className="btn-primary py-2.5 text-sm"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    Регистрация
-                  </Link>
-                </div>
-              )}
+            <div className="flex items-center justify-between px-3 py-2.5">
+              <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Тема</span>
+              <button
+                onClick={toggle}
+                className="p-2 rounded-lg transition-colors bg-white/5"
+                style={{ color: 'var(--text)' }}
+              >
+                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
             </div>
+            <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+            {isAuthenticated ? (
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm"
+                style={{ color: 'var(--red)' }}
+              >
+                <LogOut className="w-4 h-4" /> Выйти
+              </button>
+            ) : (
+              <div className="flex flex-col gap-2 pt-1">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="btn-secondary py-2.5 text-sm"
+                >
+                  <LogIn className="w-4 h-4" /> Войти
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setMobileOpen(false)}
+                  className="btn-primary py-2.5 text-sm"
+                >
+                  <UserPlus className="w-4 h-4" /> Регистрация
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -34,7 +34,7 @@ class GameListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Game
         fields = (
-            'id', 'title', 'cover_url', 'avg_rating',
+            'id', 'rawg_id', 'title', 'cover_url', 'video_url', 'avg_rating',
             'release_date', 'genres', 'platforms', 'created_at'
         )
 
@@ -51,8 +51,9 @@ class GameDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Game
         fields = (
-            'id', 'title', 'description', 'cover_url', 'avg_rating',
-            'release_date', 'genres', 'platforms', 'rawg_id', 'created_at'
+            'id', 'rawg_id', 'title', 'description', 'release_date',
+            'cover_url', 'video_url', 'avg_rating', 'initial_rating',
+            'genres', 'platforms', 'created_at'
         )
 
 
@@ -80,7 +81,7 @@ class GameWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Game
         fields = (
-            'id', 'title', 'description', 'cover_url',
+            'id', 'title', 'description', 'cover_url', 'video_url',
             'release_date', 'rawg_id', 'genre_ids', 'platform_ids'
         )
 

@@ -4,6 +4,10 @@ import type { Review } from '../types';
 interface ReviewPayload {
   text: string;
   score: number;
+  score_gameplay: number;
+  score_story: number;
+  score_graphics: number;
+  score_sound: number;
 }
 
 export const reviewsApi = {

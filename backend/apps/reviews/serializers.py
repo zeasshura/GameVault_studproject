@@ -28,7 +28,11 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ('id', 'user', 'game', 'text', 'score', 'created_at')
+        fields = (
+            'id', 'user', 'game', 'text', 'score',
+            'score_gameplay', 'score_story', 'score_graphics', 'score_sound',
+            'created_at'
+        )
         read_only_fields = ('id', 'user', 'created_at')
 
 
@@ -40,7 +44,10 @@ class ReviewWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ('id', 'text', 'score')
+        fields = (
+            'id', 'text', 'score',
+            'score_gameplay', 'score_story', 'score_graphics', 'score_sound'
+        )
 
     def validate_score(self, value):
         """Дополнительная валидация оценки."""

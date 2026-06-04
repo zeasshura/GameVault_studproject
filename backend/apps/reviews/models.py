@@ -32,6 +32,26 @@ class Review(models.Model):
         ],
         verbose_name='Оценка (1-10)'
     )
+    score_gameplay = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        verbose_name='Оценка геймплея',
+        default=5
+    )
+    score_story = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        verbose_name='Оценка сюжета',
+        default=5
+    )
+    score_graphics = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        verbose_name='Оценка графики',
+        default=5
+    )
+    score_sound = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        verbose_name='Оценка звука',
+        default=5
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата создания'

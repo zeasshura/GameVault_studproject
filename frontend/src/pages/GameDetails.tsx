@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Calendar,
-  Star,
   Plus,
   Pencil,
   Trash2,
@@ -21,6 +20,13 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 const COLLECTION_NAMES = ['Играю', 'Прошёл', 'Хочу сыграть', 'Брошено'];
 
+const ratingColor = (r: number) => {
+  if (r >= 8) return '#6dc849';
+  if (r >= 6) return '#f5c518';
+  if (r > 0)  return '#ff6347';
+  return 'var(--text-dim)';
+};
+
 const GameDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { isAuthenticated, user } = useAuthStore();
@@ -32,95 +38,80 @@ const GameDetails: React.FC = () => {
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Review form
   const [reviewText, setReviewText] = useState('');
-  const [reviewScore, setReviewScore] = useState(8);
+  const [reviewGameplay, setReviewGameplay] = useState(8);
+  const [reviewStory, setReviewStory] = useState(8);
+  const [reviewGraphics, setReviewGraphics] = useState(8);
+  const [reviewSound, setReviewSound] = useState(8);
+  const reviewScore = Math.round((reviewGameplay + reviewStory + reviewGraphics + reviewSound) / 4);
   const [submitting, setSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState('');
 
-  // Edit review
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [editText, setEditText] = useState('');
-  const [editScore, setEditScore] = useState(8);
+  const [editGameplay, setEditGameplay] = useState(8);
+  const [editStory, setEditStory] = useState(8);
+  const [editGraphics, setEditGraphics] = useState(8);
+  const [editSound, setEditSound] = useState(8);
+  const editScore = Math.round((editGameplay + editStory + editGraphics + editSound) / 4);
 
-  // Collection dropdown
   const [collectionDropdown, setCollectionDropdown] = useState(false);
   const [addingToCollection, setAddingToCollection] = useState(false);
   const [collectionMsg, setCollectionMsg] = useState('');
 
   useEffect(() => {
-    if (game) document.title = `${game.title} — GameVault`;
-    else document.title = 'Игра — GameVault';
+    document.title = game ? `${game.title} — GameVault` : 'Игра — GameVault';
   }, [game]);
 
   const fetchGame = useCallback(async () => {
     if (!id) return;
-    setLoading(true);
-    setError('');
-    try {
-      const data = await gamesApi.getGame(id);
-      setGame(data);
-    } catch {
-      setError('Не удалось загрузить игру');
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true); setError('');
+    try { setGame(await gamesApi.getGame(id)); }
+    catch { setError('Не удалось загрузить игру'); }
+    finally { setLoading(false); }
   }, [id]);
 
   const fetchReviews = useCallback(async () => {
     if (!id) return;
     setReviewsLoading(true);
-    try {
-      const data = await reviewsApi.getReviews(id);
-      setReviews(data);
-    } catch {
-      setReviews([]);
-    } finally {
-      setReviewsLoading(false);
-    }
+    try { setReviews(await reviewsApi.getReviews(id)); }
+    catch { setReviews([]); }
+    finally { setReviewsLoading(false); }
   }, [id]);
 
   const fetchCollections = useCallback(async () => {
     if (!isAuthenticated) return;
-    try {
-      const data = await collectionsApi.getCollections();
-      setCollections(data);
-    } catch {}
+    try { setCollections(await collectionsApi.getCollections()); } catch {}
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    fetchGame();
-    fetchReviews();
-    fetchCollections();
-  }, [fetchGame, fetchReviews, fetchCollections]);
+  useEffect(() => { fetchGame(); fetchReviews(); fetchCollections(); },
+    [fetchGame, fetchReviews, fetchCollections]);
 
   const myReview = reviews.find((r) => r.user.id === user?.id);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id || !reviewText.trim()) return;
-    setSubmitting(true);
-    setReviewError('');
+    setSubmitting(true); setReviewError('');
     try {
-      await reviewsApi.createReview(id, { text: reviewText, score: reviewScore });
+      await reviewsApi.createReview(id, {
+        text: reviewText,
+        score: reviewScore,
+        score_gameplay: reviewGameplay,
+        score_story: reviewStory,
+        score_graphics: reviewGraphics,
+        score_sound: reviewSound
+      });
       setReviewText('');
-      setReviewScore(8);
-      await fetchReviews();
-      await fetchGame();
-    } catch {
-      setReviewError('Не удалось отправить рецензию. Возможно, вы уже оставляли её.');
-    } finally {
-      setSubmitting(false);
-    }
+      setReviewGameplay(8); setReviewStory(8); setReviewGraphics(8); setReviewSound(8);
+      await fetchReviews(); await fetchGame();
+    } catch { setReviewError('Не удалось отправить рецензию. Возможно, вы уже оставляли её.'); }
+    finally { setSubmitting(false); }
   };
 
   const handleDeleteReview = async (reviewId: number) => {
     if (!window.confirm('Удалить рецензию?')) return;
-    try {
-      await reviewsApi.deleteReview(reviewId);
-      await fetchReviews();
-      await fetchGame();
-    } catch {}
+    try { await reviewsApi.deleteReview(reviewId); await fetchReviews(); await fetchGame(); } catch {}
   };
 
   const handleUpdateReview = async (e: React.FormEvent) => {
@@ -128,100 +119,99 @@ const GameDetails: React.FC = () => {
     if (!editingReview) return;
     setSubmitting(true);
     try {
-      await reviewsApi.updateReview(editingReview.id, { text: editText, score: editScore });
+      await reviewsApi.updateReview(editingReview.id, {
+        text: editText,
+        score: editScore,
+        score_gameplay: editGameplay,
+        score_story: editStory,
+        score_graphics: editGraphics,
+        score_sound: editSound
+      });
       setEditingReview(null);
-      await fetchReviews();
-      await fetchGame();
-    } catch {
-      setReviewError('Не удалось обновить рецензию');
-    } finally {
-      setSubmitting(false);
-    }
+      await fetchReviews(); await fetchGame();
+    } catch { setReviewError('Не удалось обновить рецензию'); }
+    finally { setSubmitting(false); }
   };
 
-  const handleAddToCollection = async (collectionId: number, collectionName: string) => {
+  const handleAddToCollection = async (collectionId: number, name: string) => {
     if (!game) return;
-    setAddingToCollection(true);
-    setCollectionDropdown(false);
+    setAddingToCollection(true); setCollectionDropdown(false);
     try {
       await collectionsApi.addGameToCollection(collectionId, game.id);
-      setCollectionMsg(`Добавлено в «${collectionName}»`);
-      setTimeout(() => setCollectionMsg(''), 3000);
-    } catch {
-      setCollectionMsg('Ошибка при добавлении');
-      setTimeout(() => setCollectionMsg(''), 3000);
-    } finally {
-      setAddingToCollection(false);
-    }
+      setCollectionMsg(`Добавлено в «${name}»`);
+    } catch { setCollectionMsg('Ошибка при добавлении'); }
+    finally { setAddingToCollection(false); setTimeout(() => setCollectionMsg(''), 3000); }
   };
 
   const createAndAddToCollection = async (name: string) => {
     if (!game) return;
-    setAddingToCollection(true);
-    setCollectionDropdown(false);
+    setAddingToCollection(true); setCollectionDropdown(false);
     try {
       const col = await collectionsApi.createCollection(name);
       await collectionsApi.addGameToCollection(col.id, game.id);
-      setCollections((prev) => [...prev, col]);
+      setCollections(prev => [...prev, col]);
       setCollectionMsg(`Добавлено в «${name}»`);
-      setTimeout(() => setCollectionMsg(''), 3000);
-    } catch {
-      setCollectionMsg('Ошибка');
-      setTimeout(() => setCollectionMsg(''), 3000);
-    } finally {
-      setAddingToCollection(false);
-    }
+    } catch { setCollectionMsg('Ошибка'); }
+    finally { setAddingToCollection(false); setTimeout(() => setCollectionMsg(''), 3000); }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center pt-20">
-        <LoadingSpinner size="xl" />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center pt-14">
+      <LoadingSpinner size="xl" />
+    </div>
+  );
 
-  if (error || !game) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center pt-20 text-center">
-        <p className="text-2xl text-red-400 font-bold mb-2">Ошибка</p>
-        <p className="text-gray-500">{error || 'Игра не найдена'}</p>
-      </div>
-    );
-  }
+  if (error || !game) return (
+    <div className="min-h-screen flex flex-col items-center justify-center pt-14 text-center">
+      <p className="text-2xl font-bold mb-2" style={{ color: 'var(--red)' }}>Ошибка</p>
+      <p style={{ color: 'var(--text-muted)' }}>{error || 'Игра не найдена'}</p>
+    </div>
+  );
 
-  const releaseYear = game.release_date ? new Date(game.release_date).getFullYear() : null;
   const releaseFormatted = game.release_date
     ? new Date(game.release_date).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' })
     : null;
 
   return (
-    <div className="min-h-screen pt-20 pb-16 animate-fade-in">
-      {/* ── Hero ──────────────────────────────────────── */}
-      <div className="relative">
-        {/* Background blur */}
-        {game.cover_url && (
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-20 blur-2xl"
-            style={{ backgroundImage: `url(${game.cover_url})` }}
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-dark-300/50 to-[var(--color-bg)]" />
+    <div className="min-h-screen pt-14 pb-16 animate-fade-in" style={{ background: 'var(--bg)' }}>
 
-        <div className="relative section-container py-12">
+      {/* ── Hero backdrop ──────────────────────────────── */}
+      <div className="relative" style={{ background: 'var(--bg-surface)' }}>
+        {/* Blurred background art */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {game.cover_url && (
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-10 blur-2xl scale-110"
+              style={{ backgroundImage: `url(${game.cover_url})` }}
+            />
+          )}
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to bottom, transparent 0%, var(--bg-surface) 100%)' }}
+          />
+        </div>
+
+        <div className="relative section-container py-10">
           <div className="flex flex-col md:flex-row gap-8">
-            {/* Cover */}
+
+            {/* Cover art */}
             <div className="flex-shrink-0">
-              <div className="w-48 md:w-64 mx-auto md:mx-0 rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
+              <div
+                className="w-44 md:w-56 mx-auto md:mx-0 rounded-xl overflow-hidden shadow-2xl"
+                style={{ border: '1px solid var(--border)' }}
+              >
                 {game.cover_url ? (
                   <img
                     src={game.cover_url}
-                    alt={`Обложка ${game.title}`}
+                    alt={game.title}
                     className="w-full aspect-[3/4] object-cover"
                   />
                 ) : (
-                  <div className="w-full aspect-[3/4] bg-gradient-to-br from-primary-900/40 to-accent-900/20 flex items-center justify-center">
-                    <span className="text-5xl">🎮</span>
+                  <div
+                    className="w-full aspect-[3/4] flex items-center justify-center"
+                    style={{ background: 'var(--bg-card)' }}
+                  >
+                    <span className="text-4xl">🎮</span>
                   </div>
                 )}
               </div>
@@ -229,28 +219,32 @@ const GameDetails: React.FC = () => {
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 leading-tight" style={{ color: 'var(--text)' }}>
                 {game.title}
               </h1>
 
-              {/* Rating */}
+              {/* Rating row */}
               <div className="flex items-center gap-3 mb-4">
-                <RatingStars rating={game.avg_rating} size="lg" />
-                <div className="flex items-center gap-1">
-                  <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                  <span className="text-2xl font-bold text-yellow-400">
-                    {game.avg_rating > 0 ? game.avg_rating.toFixed(1) : '—'}
-                  </span>
-                  <span className="text-gray-500 text-sm">/ 10</span>
+                <div
+                  className="text-lg font-black px-3 py-1 rounded-lg"
+                  style={{
+                    background: game.avg_rating > 0 ? ratingColor(game.avg_rating) : 'var(--bg-card)',
+                    color: game.avg_rating >= 6 ? '#000' : '#fff',
+                  }}
+                >
+                  {game.avg_rating > 0 ? game.avg_rating.toFixed(1) : '—'}
                 </div>
+                <RatingStars rating={game.avg_rating} size="md" />
+                <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  {reviews.length > 0 ? `${reviews.length} рецензий` : 'Нет рецензий'}
+                </span>
               </div>
 
-              {/* Meta */}
+              {/* Release date */}
               {releaseFormatted && (
-                <div className="flex items-center gap-2 text-gray-400 text-sm mb-4">
+                <div className="flex items-center gap-2 text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
                   <Calendar className="w-4 h-4" />
                   <span>{releaseFormatted}</span>
-                  {releaseYear && <span className="text-gray-600">({releaseYear})</span>}
                 </div>
               )}
 
@@ -258,7 +252,7 @@ const GameDetails: React.FC = () => {
               {game.genres.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-3">
                   {game.genres.map((g) => (
-                    <span key={g.id} className="chip-primary">{g.name}</span>
+                    <span key={g.id} className="chip-primary text-xs">{g.name}</span>
                   ))}
                 </div>
               )}
@@ -267,35 +261,33 @@ const GameDetails: React.FC = () => {
               {game.platforms.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-6">
                   {game.platforms.map((p) => (
-                    <span key={p.id} className="chip-accent">{p.name}</span>
+                    <span key={p.id} className="chip-accent text-xs">{p.name}</span>
                   ))}
                 </div>
               )}
 
-              {/* Add to Collection */}
+              {/* Add to collection */}
               {isAuthenticated && (
                 <div className="relative inline-block">
                   <button
                     id="add-to-collection-btn"
-                    onClick={() => setCollectionDropdown((p) => !p)}
+                    onClick={() => setCollectionDropdown(p => !p)}
                     disabled={addingToCollection}
-                    className="btn-primary gap-2"
+                    className="btn-primary"
                   >
-                    {addingToCollection ? (
-                      <LoadingSpinner size="sm" />
-                    ) : (
-                      <Plus className="w-4 h-4" />
-                    )}
-                    Добавить в коллекцию
+                    {addingToCollection ? <LoadingSpinner size="sm" /> : <Plus className="w-4 h-4" />}
+                    В коллекцию
                     <ChevronDown className={`w-4 h-4 transition-transform ${collectionDropdown ? 'rotate-180' : ''}`} />
                   </button>
 
                   {collectionDropdown && (
-                    <div className="absolute top-full left-0 mt-2 w-56 glass shadow-xl rounded-xl overflow-hidden z-20 animate-fade-in">
-                      {/* Existing collections */}
+                    <div
+                      className="absolute top-full left-0 mt-1 w-52 rounded-xl overflow-hidden z-50 animate-fade-in"
+                      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                    >
                       {collections.length > 0 && (
                         <>
-                          <div className="px-3 py-2 text-xs text-gray-500 uppercase tracking-wider border-b border-white/10">
+                          <div className="px-3 py-1.5 text-xs uppercase tracking-wider" style={{ color: 'var(--text-dim)' }}>
                             Мои коллекции
                           </div>
                           {collections.map((col) => (
@@ -303,16 +295,18 @@ const GameDetails: React.FC = () => {
                               key={col.id}
                               id={`add-to-collection-${col.id}`}
                               onClick={() => handleAddToCollection(col.id, col.name)}
-                              className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-primary-500/10 hover:text-primary-300 transition-colors"
+                              className="w-full text-left px-4 py-2 text-sm transition-colors"
+                              style={{ color: 'var(--text-muted)' }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--text)'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
                             >
                               {col.name}
                             </button>
                           ))}
-                          <div className="border-t border-white/10" />
+                          <div style={{ borderTop: '1px solid var(--border)' }} />
                         </>
                       )}
-                      {/* Preset new collections */}
-                      <div className="px-3 py-2 text-xs text-gray-500 uppercase tracking-wider">
+                      <div className="px-3 py-1.5 text-xs uppercase tracking-wider" style={{ color: 'var(--text-dim)' }}>
                         Создать коллекцию
                       </div>
                       {COLLECTION_NAMES.map((name) => (
@@ -320,7 +314,10 @@ const GameDetails: React.FC = () => {
                           key={name}
                           id={`create-collection-${name}`}
                           onClick={() => createAndAddToCollection(name)}
-                          className="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:bg-accent-500/10 hover:text-accent-300 transition-colors"
+                          className="w-full text-left px-4 py-2 text-sm transition-colors"
+                          style={{ color: 'var(--text-muted)' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--accent)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
                         >
                           + {name}
                         </button>
@@ -331,60 +328,89 @@ const GameDetails: React.FC = () => {
               )}
 
               {collectionMsg && (
-                <p className="mt-2 text-sm text-accent-400 animate-fade-in">{collectionMsg}</p>
+                <p className="mt-2 text-sm animate-fade-in" style={{ color: 'var(--accent)' }}>{collectionMsg}</p>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Description ───────────────────────────────── */}
+      {/* ── Description ────────────────────────────────── */}
       {game.description && (
-        <section className="section-container mb-12">
-          <div className="glass rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-primary-400" />
+        <section className="section-container mt-8 mb-8">
+          <div
+            className="rounded-xl p-6"
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+          >
+            <h2 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: 'var(--text)' }}>
+              <BookOpen className="w-5 h-5" style={{ color: 'var(--accent)' }} />
               Описание
             </h2>
-            <p className="text-gray-400 leading-relaxed whitespace-pre-wrap">{game.description}</p>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text-muted)' }}>
+              {game.description}
+            </p>
           </div>
         </section>
       )}
 
-      {/* ── Reviews ───────────────────────────────────── */}
+      {/* ── Reviews ────────────────────────────────────── */}
       <section className="section-container">
-        <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-          <MessageSquare className="w-6 h-6 text-primary-400" />
+        <h2 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--text)' }}>
+          <MessageSquare className="w-5 h-5" style={{ color: 'var(--accent)' }} />
           Рецензии
           {reviews.length > 0 && (
-            <span className="text-sm font-normal text-gray-500 ml-1">({reviews.length})</span>
+            <span className="text-sm font-normal" style={{ color: 'var(--text-dim)' }}>({reviews.length})</span>
           )}
         </h2>
 
-        {/* Write Review Form */}
+        {/* Write review form */}
         {isAuthenticated && !myReview && (
           <form
             onSubmit={handleSubmitReview}
-            className="glass rounded-2xl p-6 mb-8 animate-slide-up"
+            className="rounded-xl p-5 mb-6 animate-slide-up"
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
             id="review-form"
           >
-            <h3 className="font-semibold text-white mb-4">Написать рецензию</h3>
+            <h3 className="font-semibold mb-4 text-sm" style={{ color: 'var(--text)' }}>Написать рецензию</h3>
 
             <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">Оценка</label>
-              <div className="flex items-center gap-4">
-                <RatingStars
-                  rating={reviewScore}
-                  size="lg"
-                  interactive
-                  onChange={(v) => setReviewScore(v)}
-                />
-                <span className="text-2xl font-bold text-yellow-400">{reviewScore}/10</span>
+              <label className="block text-xs mb-3" style={{ color: 'var(--text-muted)' }}>Критерии оценки</label>
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs w-24" style={{ color: 'var(--text)' }}>Геймплей</span>
+                  <input type="range" min="1" max="10" value={reviewGameplay} onChange={(e) => setReviewGameplay(Number(e.target.value))} className="flex-1" />
+                  <span className="text-xs font-bold w-6 text-right" style={{ color: ratingColor(reviewGameplay) }}>{reviewGameplay}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs w-24" style={{ color: 'var(--text)' }}>Сюжет</span>
+                  <input type="range" min="1" max="10" value={reviewStory} onChange={(e) => setReviewStory(Number(e.target.value))} className="flex-1" />
+                  <span className="text-xs font-bold w-6 text-right" style={{ color: ratingColor(reviewStory) }}>{reviewStory}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs w-24" style={{ color: 'var(--text)' }}>Графика</span>
+                  <input type="range" min="1" max="10" value={reviewGraphics} onChange={(e) => setReviewGraphics(Number(e.target.value))} className="flex-1" />
+                  <span className="text-xs font-bold w-6 text-right" style={{ color: ratingColor(reviewGraphics) }}>{reviewGraphics}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs w-24" style={{ color: 'var(--text)' }}>Звук</span>
+                  <input type="range" min="1" max="10" value={reviewSound} onChange={(e) => setReviewSound(Number(e.target.value))} className="flex-1" />
+                  <span className="text-xs font-bold w-6 text-right" style={{ color: ratingColor(reviewSound) }}>{reviewSound}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Итоговый балл:</span>
+                <span
+                  className="text-xl font-bold px-2 py-0.5 rounded"
+                  style={{ background: ratingColor(reviewScore), color: reviewScore >= 6 ? '#000' : '#fff' }}
+                >
+                  {reviewScore}/10
+                </span>
               </div>
             </div>
 
             <div className="mb-4">
-              <label htmlFor="review-text" className="block text-sm text-gray-400 mb-2">
+              <label htmlFor="review-text" className="block text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
                 Текст рецензии
               </label>
               <textarea
@@ -399,14 +425,14 @@ const GameDetails: React.FC = () => {
             </div>
 
             {reviewError && (
-              <p className="text-red-400 text-sm mb-3">{reviewError}</p>
+              <p className="text-sm mb-3" style={{ color: 'var(--red)' }}>{reviewError}</p>
             )}
 
             <button
               type="submit"
               id="submit-review-btn"
               disabled={submitting || !reviewText.trim()}
-              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary disabled:opacity-50"
             >
               {submitting ? <LoadingSpinner size="sm" /> : null}
               Опубликовать
@@ -414,17 +440,44 @@ const GameDetails: React.FC = () => {
           </form>
         )}
 
-        {/* My Review */}
+        {/* My review */}
         {isAuthenticated && myReview && (
-          <div className="mb-8">
+          <div className="mb-6">
             {editingReview?.id === myReview.id ? (
-              <form onSubmit={handleUpdateReview} className="glass rounded-2xl p-6 border border-primary-500/30 animate-slide-up">
-                <h3 className="font-semibold text-white mb-4">Редактировать рецензию</h3>
+              <form
+                onSubmit={handleUpdateReview}
+                className="rounded-xl p-5 animate-slide-up"
+                style={{ background: 'var(--bg-surface)', border: `1px solid var(--accent)` }}
+              >
+                <h3 className="font-semibold mb-4 text-sm" style={{ color: 'var(--text)' }}>Редактировать рецензию</h3>
                 <div className="mb-4">
-                  <label className="block text-sm text-gray-400 mb-2">Оценка</label>
-                  <div className="flex items-center gap-4">
-                    <RatingStars rating={editScore} size="lg" interactive onChange={setEditScore} />
-                    <span className="text-2xl font-bold text-yellow-400">{editScore}/10</span>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-xs w-24" style={{ color: 'var(--text)' }}>Геймплей</span>
+                      <input type="range" min="1" max="10" value={editGameplay} onChange={(e) => setEditGameplay(Number(e.target.value))} className="flex-1" />
+                      <span className="text-xs font-bold w-6 text-right" style={{ color: ratingColor(editGameplay) }}>{editGameplay}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-xs w-24" style={{ color: 'var(--text)' }}>Сюжет</span>
+                      <input type="range" min="1" max="10" value={editStory} onChange={(e) => setEditStory(Number(e.target.value))} className="flex-1" />
+                      <span className="text-xs font-bold w-6 text-right" style={{ color: ratingColor(editStory) }}>{editStory}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-xs w-24" style={{ color: 'var(--text)' }}>Графика</span>
+                      <input type="range" min="1" max="10" value={editGraphics} onChange={(e) => setEditGraphics(Number(e.target.value))} className="flex-1" />
+                      <span className="text-xs font-bold w-6 text-right" style={{ color: ratingColor(editGraphics) }}>{editGraphics}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-xs w-24" style={{ color: 'var(--text)' }}>Звук</span>
+                      <input type="range" min="1" max="10" value={editSound} onChange={(e) => setEditSound(Number(e.target.value))} className="flex-1" />
+                      <span className="text-xs font-bold w-6 text-right" style={{ color: ratingColor(editSound) }}>{editSound}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl font-bold px-2 py-0.5 rounded"
+                      style={{ background: ratingColor(editScore), color: editScore >= 6 ? '#000' : '#fff' }}>
+                      {editScore}/10
+                    </span>
                   </div>
                 </div>
                 <textarea
@@ -440,24 +493,20 @@ const GameDetails: React.FC = () => {
                     {submitting ? <LoadingSpinner size="sm" /> : null}
                     Сохранить
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingReview(null)}
-                    className="btn-secondary"
-                    id="cancel-edit-btn"
-                  >
+                  <button type="button" onClick={() => setEditingReview(null)} className="btn-secondary" id="cancel-edit-btn">
                     Отмена
                   </button>
                 </div>
               </form>
             ) : (
-              <ReviewCard
-                review={myReview}
-                isOwner
-                onEdit={() => {
-                  setEditingReview(myReview);
-                  setEditText(myReview.text);
-                  setEditScore(myReview.score);
+              <ReviewCard review={myReview} isOwner
+                onEdit={() => { 
+                  setEditingReview(myReview); 
+                  setEditText(myReview.text); 
+                  setEditGameplay(myReview.score_gameplay);
+                  setEditStory(myReview.score_story);
+                  setEditGraphics(myReview.score_graphics);
+                  setEditSound(myReview.score_sound);
                 }}
                 onDelete={() => handleDeleteReview(myReview.id)}
               />
@@ -465,29 +514,25 @@ const GameDetails: React.FC = () => {
           </div>
         )}
 
-        {/* All Reviews */}
+        {/* All reviews */}
         {reviewsLoading ? (
-          <div className="flex justify-center py-8">
-            <LoadingSpinner size="md" />
-          </div>
+          <div className="flex justify-center py-8"><LoadingSpinner size="md" /></div>
         ) : reviews.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
             <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-30" />
             <p>Рецензий пока нет. Будьте первым!</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
-            {reviews
-              .filter((r) => r.user.id !== user?.id)
-              .map((review) => (
-                <ReviewCard
-                  key={review.id}
-                  review={review}
-                  isOwner={false}
-                  isAdmin={user?.role === 'admin'}
-                  onDelete={() => handleDeleteReview(review.id)}
-                />
-              ))}
+          <div className="flex flex-col gap-3">
+            {reviews.filter(r => r.user.id !== user?.id).map((review) => (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                isOwner={false}
+                isAdmin={user?.role === 'admin'}
+                onDelete={() => handleDeleteReview(review.id)}
+              />
+            ))}
           </div>
         )}
       </section>
@@ -495,6 +540,7 @@ const GameDetails: React.FC = () => {
   );
 };
 
+/* ── ReviewCard ─────────────────────────────────────────── */
 interface ReviewCardProps {
   review: Review;
   isOwner: boolean;
@@ -503,22 +549,34 @@ interface ReviewCardProps {
   onDelete?: () => void;
 }
 
+const ratingColorLocal = (r: number) => {
+  if (r >= 8) return '#6dc849';
+  if (r >= 6) return '#f5c518';
+  if (r > 0)  return '#ff6347';
+  return 'var(--text-dim)';
+};
+
 const ReviewCard: React.FC<ReviewCardProps> = ({ review, isOwner, isAdmin, onEdit, onDelete }) => {
   const dateStr = new Date(review.created_at).toLocaleDateString('ru-RU', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+    year: 'numeric', month: 'long', day: 'numeric',
   });
 
   return (
     <div
-      className={`glass rounded-2xl p-5 ${isOwner ? 'border border-primary-500/30' : ''}`}
+      className="rounded-xl p-4"
+      style={{
+        background: 'var(--bg-surface)',
+        border: `1px solid ${isOwner ? 'var(--accent)' : 'var(--border)'}`,
+      }}
       id={`review-${review.id}`}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <Link to={`/profile/${review.user.id}`} className="block cursor-pointer">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-sm font-bold">
+          <Link to={`/profile/${review.user.id}`}>
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-black text-xs font-bold flex-shrink-0"
+              style={{ background: 'var(--accent)' }}
+            >
               {review.user.username[0]?.toUpperCase()}
             </div>
           </Link>
@@ -526,17 +584,21 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review, isOwner, isAdmin, onEdi
             <div className="flex items-center gap-2">
               <Link
                 to={`/profile/${review.user.id}`}
-                className="font-semibold text-white text-sm hover:text-primary-400 hover:underline transition-colors cursor-pointer"
+                className="font-semibold text-sm transition-colors"
+                style={{ color: 'var(--text)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text)')}
               >
                 {review.user.username}
               </Link>
               {isOwner && (
-                <span className="text-[10px] bg-primary-500/20 text-primary-300 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                  style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
                   Вы
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+            <div className="flex items-center gap-1.5 text-xs mt-0.5" style={{ color: 'var(--text-dim)' }}>
               <User className="w-3 h-3" />
               <span>{dateStr}</span>
             </div>
@@ -544,37 +606,68 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review, isOwner, isAdmin, onEdi
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 bg-yellow-400/10 border border-yellow-400/20 rounded-lg px-2.5 py-1">
-            <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-            <span className="text-sm font-bold text-yellow-400">{review.score}</span>
+          <div
+            className="text-sm font-bold px-2 py-0.5 rounded"
+            style={{
+              background: ratingColorLocal(review.score),
+              color: review.score >= 6 ? '#000' : '#fff',
+            }}
+          >
+            {review.score}/10
           </div>
           {(isOwner || isAdmin) && (
-            <div className="flex gap-1 ml-2">
+            <div className="flex gap-1">
               {isOwner && onEdit && (
                 <button
                   id={`edit-review-${review.id}`}
                   onClick={onEdit}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-primary-300 hover:bg-primary-500/10 transition-colors"
-                  aria-label="Редактировать рецензию"
+                  className="p-1.5 rounded-lg transition-colors"
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+                  aria-label="Редактировать"
                 >
-                  <Pencil className="w-4 h-4" />
+                  <Pencil className="w-3.5 h-3.5" />
                 </button>
               )}
               {onDelete && (
                 <button
                   id={`delete-review-${review.id}`}
                   onClick={onDelete}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                  aria-label="Удалить рецензию"
+                  className="p-1.5 rounded-lg transition-colors"
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--red)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+                  aria-label="Удалить"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
           )}
         </div>
       </div>
-      <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{review.text}</p>
+      <p className="text-sm leading-relaxed whitespace-pre-wrap mb-3" style={{ color: 'var(--text-muted)' }}>
+        {review.text}
+      </p>
+      <div className="flex flex-wrap gap-3 mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>Геймплей</span>
+          <span className="text-xs font-bold" style={{ color: ratingColorLocal(review.score_gameplay) }}>{review.score_gameplay}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>Сюжет</span>
+          <span className="text-xs font-bold" style={{ color: ratingColorLocal(review.score_story) }}>{review.score_story}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>Графика</span>
+          <span className="text-xs font-bold" style={{ color: ratingColorLocal(review.score_graphics) }}>{review.score_graphics}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>Звук</span>
+          <span className="text-xs font-bold" style={{ color: ratingColorLocal(review.score_sound) }}>{review.score_sound}</span>
+        </div>
+      </div>
     </div>
   );
 };

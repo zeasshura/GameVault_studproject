@@ -16,8 +16,8 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', className 
   return (
     <div className={`flex items-center justify-center ${className}`} role="status" aria-label="Загрузка...">
       <div
-        className={`${sizeMap[size]} rounded-full border-primary-500/20 border-t-primary-500 animate-spin`}
-        style={{ borderStyle: 'solid' }}
+        className={`${sizeMap[size]} rounded-full animate-spin`}
+        style={{ borderStyle: 'solid', borderColor: 'rgba(109,200,73,0.2)', borderTopColor: 'var(--accent)' }}
       />
       <span className="sr-only">Загрузка...</span>
     </div>

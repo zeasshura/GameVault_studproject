@@ -15,21 +15,13 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    document.title = 'Войти — GameVault';
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) navigate('/');
-  }, [isAuthenticated, navigate]);
+  useEffect(() => { document.title = 'Войти — GameVault'; }, []);
+  useEffect(() => { if (isAuthenticated) navigate('/'); }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!email.trim() || !password) {
-      setError('Заполните все поля');
-      return;
-    }
+    if (!email.trim() || !password) { setError('Заполните все поля'); return; }
     setLoading(true);
     try {
       const tokens = await authApi.login({ email, password });
@@ -45,67 +37,74 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 hero-gradient" />
-      <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-primary-600/15 rounded-full blur-[100px]" />
-      <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-accent-600/10 rounded-full blur-[100px]" />
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{ background: 'var(--bg)' }}
+    >
+      <div className="w-full max-w-sm animate-slide-up">
 
-      <div className="relative w-full max-w-md animate-slide-up">
-        {/* Logo */}
+        {/* Logo header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 shadow-xl shadow-primary-500/30 mb-4 animate-float">
-            <Gamepad2 className="w-7 h-7 text-white" />
+          <div
+            className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4"
+            style={{ background: 'var(--accent)' }}
+          >
+            <Gamepad2 className="w-6 h-6 text-black" />
           </div>
-          <h1 className="text-3xl font-black gradient-text">GameVault</h1>
-          <p className="text-gray-500 mt-1">Войдите в свой аккаунт</p>
+          <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>GameVault</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Войдите в свой аккаунт</p>
         </div>
 
         {/* Card */}
-        <div className="glass rounded-3xl p-8 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-5" id="login-form">
-            {/* Email */}
+        <div
+          className="rounded-xl p-6"
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+        >
+          <form onSubmit={handleSubmit} className="space-y-4" id="login-form">
+
             <div>
-              <label htmlFor="login-email" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="login-email" className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'var(--text-dim)' }} />
                 <input
                   id="login-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="input-field pl-11"
+                  className="input-field pl-10"
                   autoComplete="email"
                   required
                 />
               </div>
             </div>
 
-            {/* Password */}
             <div>
-              <label htmlFor="login-password" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="login-password" className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>
                 Пароль
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'var(--text-dim)' }} />
                 <input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="input-field pl-11 pr-11"
+                  className="input-field pl-10 pr-10"
                   autoComplete="current-password"
                   required
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword((p) => !p)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
-                  aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                  onClick={() => setShowPassword(p => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                  style={{ color: 'var(--text-dim)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-dim)')}
+                  aria-label={showPassword ? 'Скрыть' : 'Показать'}
                   id="toggle-password-visibility"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -113,31 +112,35 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-            {/* Error */}
             {error && (
-              <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 animate-fade-in">
+              <div
+                className="text-xs px-3 py-2.5 rounded-lg animate-fade-in"
+                style={{ background: 'rgba(255,85,85,0.1)', color: 'var(--red)', border: '1px solid rgba(255,85,85,0.2)' }}
+              >
                 {error}
               </div>
             )}
 
-            {/* Submit */}
             <button
               type="submit"
               id="login-submit-btn"
               disabled={loading}
-              className="btn-primary w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed"
+              className="btn-primary w-full py-3"
             >
-              {loading ? <LoadingSpinner size="sm" /> : <LogIn className="w-5 h-5" />}
+              {loading ? <LoadingSpinner size="sm" /> : <LogIn className="w-4 h-4" />}
               Войти
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-500">
+          <div className="mt-5 text-center text-xs" style={{ color: 'var(--text-muted)' }}>
             Нет аккаунта?{' '}
             <Link
               to="/register"
               id="go-to-register"
-              className="text-primary-400 hover:text-primary-300 font-medium transition-colors"
+              className="font-semibold transition-colors"
+              style={{ color: 'var(--accent)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.8')}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
             >
               Зарегистрироваться
             </Link>

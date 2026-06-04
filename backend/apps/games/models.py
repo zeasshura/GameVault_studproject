@@ -63,6 +63,11 @@ class Game(models.Model):
         null=True,
         verbose_name='URL обложки'
     )
+    video_url = models.URLField(
+        blank=True,
+        null=True,
+        verbose_name='URL видео (трейлера)'
+    )
     avg_rating = models.FloatField(
         default=0.0,
         verbose_name='Средний рейтинг'
