@@ -108,7 +108,7 @@ class Game(models.Model):
     class Meta:
         verbose_name = 'Игра'
         verbose_name_plural = 'Игры'
-        ordering = ['-created_at']
+        ordering = ['-created_at', 'id']
 
     def __str__(self):
         return self.title

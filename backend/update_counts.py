@@ -24,7 +24,6 @@ for i, game in enumerate(games, 1):
             real_rating = round(data.get("rating", 0.0) * 2, 2)
             
             game.initial_rating_count = real_count
-            # Only update initial rating if we want to sync it too
             game.initial_rating = real_rating
             game.save(update_fields=["initial_rating_count", "initial_rating"])
             game.update_avg_rating()

@@ -690,8 +690,9 @@ const GameListTab: React.FC<GameListTabProps> = ({ genres, platforms }) => {
       {editingGame && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setEditingGame(null)} />
-          <div className="relative glass rounded-3xl p-8 w-full max-w-lg animate-slide-up shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
+          <div className="relative glass rounded-3xl w-full max-w-lg animate-slide-up shadow-2xl flex flex-col" style={{ maxHeight: '90vh' }}>
+            {/* Header — всегда виден */}
+            <div className="flex items-center justify-between p-8 pb-4 flex-shrink-0">
               <h3 className="text-lg font-bold text-white">Редактировать игру</h3>
               <button
                 id="close-edit-modal"
@@ -702,7 +703,8 @@ const GameListTab: React.FC<GameListTabProps> = ({ genres, platforms }) => {
               </button>
             </div>
 
-            <div className="space-y-4">
+            {/* Scrollable content */}
+            <div className="overflow-y-auto px-8 pb-2 flex-1 space-y-4">
               <div>
                 <label htmlFor="edit-title" className="block text-sm text-gray-400 mb-2">Название</label>
                 <input
@@ -803,7 +805,8 @@ const GameListTab: React.FC<GameListTabProps> = ({ genres, platforms }) => {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            {/* Footer с кнопками — всегда виден */}
+            <div className="flex gap-3 p-8 pt-4 flex-shrink-0">
               <button
                 id="save-edit-game-btn"
                 onClick={handleSave}

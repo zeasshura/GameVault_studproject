@@ -3,27 +3,21 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Загрузка переменных окружения из .env файла
 load_dotenv(dotenv_path=BASE_DIR / '.env')
 load_dotenv(dotenv_path=BASE_DIR.parent / '.env')
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
     'django-insecure-default-secret-key-change-in-production-!!!'
 )
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = ['*']
 
-# Application definition
 INSTALLED_APPS = [
-    # Django встроенные приложения
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -31,13 +25,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Сторонние пакеты
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_spectacular',
 
-    # Приложения проекта
     'apps.users.apps.UsersConfig',
     'apps.games.apps.GamesConfig',
     'apps.reviews.apps.ReviewsConfig',
@@ -75,7 +67,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database configuration
 # Использует переменные окружения для подключения к PostgreSQL
 _db_host = os.environ.get('DB_HOST', '')
 _db_name = os.environ.get('DB_NAME', '')
@@ -104,10 +95,8 @@ DATABASES = {
     }
 }
 
-# Custom User model
 AUTH_USER_MODEL = 'users.User'
 
-# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -123,24 +112,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
 LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Django REST Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -149,7 +133,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
+    'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_FILTER_BACKENDS': [
         'rest_framework.filters.SearchFilter',
@@ -157,7 +141,6 @@ REST_FRAMEWORK = {
     ],
 }
 
-# SimpleJWT configuration
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -174,7 +157,6 @@ SIMPLE_JWT = {
     'TOKEN_REFRESH_SERIALIZER': 'rest_framework_simplejwt.serializers.TokenRefreshSerializer',
 }
 
-# drf-spectacular (OpenAPI/Swagger) configuration
 SPECTACULAR_SETTINGS = {
     'TITLE': 'GameVault API',
     'DESCRIPTION': 'API для онлайн-библиотеки видеоигр GameVault',
@@ -184,10 +166,8 @@ SPECTACULAR_SETTINGS = {
     'SORT_OPERATIONS': False,
 }
 
-# CORS configuration
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-# RAWG API configuration
 RAWG_API_KEY = os.environ.get('RAWG_API_KEY', '')
 RAWG_BASE_URL = 'https://api.rawg.io/api'

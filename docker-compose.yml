@@ -23,21 +23,25 @@ services:
       dockerfile: Dockerfile
     container_name: gamevault_backend
     restart: unless-stopped
+    network_mode: host
     environment:
       SECRET_KEY: ${SECRET_KEY:-super-secret-django-key-change-in-production}
       DEBUG: ${DEBUG:-True}
-      DB_HOST: db
+      DB_HOST: localhost
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-gamevault}
       DB_USER: ${DB_USER:-gamevault}
       DB_PASSWORD: ${DB_PASSWORD:-gamevault_secret}
       RAWG_API_KEY: ${RAWG_API_KEY:-}
       ALLOWED_HOSTS: "*"
+      # v2rayN слушает на 127.0.0.1:10808 — с network_mode: host это работает напрямую
+      HTTP_PROXY: socks5://127.0.0.1:10808
+      HTTPS_PROXY: socks5://127.0.0.1:10808
+      http_proxy: socks5://127.0.0.1:10808
+      https_proxy: socks5://127.0.0.1:10808
     volumes:
       - ./backend:/app
       - media_files:/app/media
-    ports:
-      - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -53,17 +57,31 @@ services:
       dockerfile: Dockerfile
     container_name: gamevault_frontend
     restart: unless-stopped
+    network_mode: host
     environment:
       VITE_API_BASE_URL: http://localhost:8000
-      BACKEND_URL: http://backend:8000
+      BACKEND_URL: http://localhost:8000
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    ports:
-      - "5173:5173"
     depends_on:
       - backend
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: gamevault_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gamevault.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
 
 volumes:
   postgres_data:
   media_files:
+  pgadmin_data:

@@ -6,6 +6,7 @@
 import csv
 import io
 import logging
+import threading
 from datetime import datetime
 
 import requests
@@ -130,32 +131,51 @@ class GameViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """
         Получение детальной информации об игре.
-        Если описание содержит заглушку, подтягиваем его из RAWG.
+        Если описание содержит заглушку, запускаем фоновое обновление из RAWG
+        (не блокируем ответ пользователю).
         """
         instance = self.get_object()
-        
+
         # Если описание пустое или содержит заглушку о загрузке, и есть rawg_id
         placeholder = 'Описание загружается из RAWG'
         if (not instance.description or placeholder in instance.description) and instance.rawg_id:
             api_key = getattr(settings, 'RAWG_API_KEY', '')
             if api_key:
-                try:
-                    response = requests.get(
-                        f'{settings.RAWG_BASE_URL}/games/{instance.rawg_id}',
-                        params={'key': api_key, 'lang': 'ru'},
-                        timeout=10
-                    )
-                    if response.status_code == 200:
-                        data = response.json()
-                        raw_desc = data.get('description_raw') or ''
-                        html_desc = data.get('description') or ''
-                        desc = raw_desc.strip() if raw_desc else strip_tags(html_desc).strip()
-                        if desc:
-                            instance.description = desc
-                            instance.save(update_fields=['description'])
-                except Exception as e:
-                    logger.error(f'Ошибка при ленивом получении описания из RAWG для игры {instance.id}: {e}')
-        
+                # Запускаем обновление описания в фоновом потоке,
+                # чтобы не блокировать HTTP-ответ при медленном/недоступном RAWG.
+                def _fetch_description(game_id, rawg_id):
+                    try:
+                        resp = requests.get(
+                            f'{settings.RAWG_BASE_URL}/games/{rawg_id}',
+                            params={'key': api_key, 'lang': 'ru'},
+                            timeout=5,
+                        )
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            raw_desc = data.get('description_raw') or ''
+                            html_desc = data.get('description') or ''
+                            desc = raw_desc.strip() if raw_desc else strip_tags(html_desc).strip()
+                            if desc:
+                                Game.objects.filter(pk=game_id).update(description=desc)
+                                logger.info(
+                                    f'Описание для игры {game_id} успешно обновлено из RAWG.'
+                                )
+                    except requests.Timeout:
+                        logger.warning(
+                            f'RAWG API не ответил вовремя для игры {game_id} (rawg_id={rawg_id}).'
+                        )
+                    except Exception as e:
+                        logger.error(
+                            f'Ошибка при ленивом получении описания из RAWG для игры {game_id}: {e}'
+                        )
+
+                thread = threading.Thread(
+                    target=_fetch_description,
+                    args=(instance.id, instance.rawg_id),
+                    daemon=True,
+                )
+                thread.start()
+
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
