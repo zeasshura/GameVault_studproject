@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import type { Game } from '../types';
@@ -9,18 +9,6 @@ interface GameCardProps {
 
 /** RAWG-style game card: 16:9 landscape cover, green rating badge, dark surface */
 const GameCard: React.FC<GameCardProps> = ({ game }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    if (isHovered && videoRef.current) {
-      videoRef.current.play().catch(() => {}); // Игнорируем ошибки автовоспроизведения
-    } else if (!isHovered && videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-    }
-  }, [isHovered]);
-
   const releaseYear = game.release_date
     ? new Date(game.release_date).getFullYear()
     : null;
@@ -37,8 +25,6 @@ const GameCard: React.FC<GameCardProps> = ({ game }) => {
       to={`/games/${game.id}`}
       className="group block glass-card h-full"
       aria-label={`Перейти к игре ${game.title}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Cover — 16:9 landscape, like RAWG */}
       <div className="relative aspect-video overflow-hidden"
@@ -47,7 +33,7 @@ const GameCard: React.FC<GameCardProps> = ({ game }) => {
           <img
             src={game.cover_url}
             alt={`Обложка ${game.title}`}
-            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isHovered && game.video_url ? 'opacity-0' : 'opacity-100'}`}
+            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105`}
             loading="lazy"
           />
         ) : (
@@ -58,16 +44,7 @@ const GameCard: React.FC<GameCardProps> = ({ game }) => {
           </div>
         )}
 
-        {game.video_url && (
-          <video
-            ref={videoRef}
-            src={game.video_url}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
-            muted
-            loop
-            playsInline
-          />
-        )}
+
 
         {/* Rating badge — top-left, RAWG style */}
         {game.avg_rating > 0 && (

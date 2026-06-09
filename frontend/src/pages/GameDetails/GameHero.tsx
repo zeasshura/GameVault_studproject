@@ -77,6 +77,7 @@ const GameHero: React.FC<GameHeroProps> = ({ game, reviewCount, collections, set
               <RatingStars rating={game.avg_rating} size="md" />
               <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
                 {reviewCount > 0 ? `${reviewCount} рецензий` : 'Нет рецензий'}
+                {game.initial_rating_count > 0 && ` • ${game.initial_rating_count} оценок RAWG`}
               </span>
             </div>
 

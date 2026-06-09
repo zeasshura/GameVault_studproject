@@ -34,7 +34,6 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-gamevault_secret}
       RAWG_API_KEY: ${RAWG_API_KEY:-}
       ALLOWED_HOSTS: "*"
-      # v2rayN слушает на 127.0.0.1:10808 — с network_mode: host это работает напрямую
       HTTP_PROXY: socks5://127.0.0.1:10808
       HTTPS_PROXY: socks5://127.0.0.1:10808
       http_proxy: socks5://127.0.0.1:10808

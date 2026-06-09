@@ -121,7 +121,8 @@ class GameViewSet(viewsets.ModelViewSet):
 
         placeholder = 'Описание загружается из RAWG'
         if (not instance.description or placeholder in instance.description) and instance.rawg_id:
-            RawgService.fetch_description_async(instance.id, instance.rawg_id)
+            RawgService.fetch_description_sync(instance.id, instance.rawg_id)
+            instance.refresh_from_db()
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data)

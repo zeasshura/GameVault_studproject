@@ -53,7 +53,7 @@ class GameDetailSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'rawg_id', 'title', 'description', 'release_date',
             'cover_url', 'video_url', 'avg_rating', 'initial_rating',
-            'genres', 'platforms', 'created_at'
+            'initial_rating_count', 'genres', 'platforms', 'created_at'
         )
 
 

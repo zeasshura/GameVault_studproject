@@ -5,7 +5,6 @@ export default {
   theme: {
     extend: {
       colors: {
-        // RAWG-inspired dark palette
         rawg: {
           bg:      '#1a1a1a',
           surface: '#202020',
@@ -14,13 +13,11 @@ export default {
           border:  '#3d3d3d',
           muted:   '#5a5a5a',
         },
-        // Green accent — RAWG rating / highlight color
         green: {
           400: '#a2d86a',
           500: '#6dc849',
           600: '#5aaa3b',
         },
-        // Keep primary as muted gray-blue for nav active states
         primary: {
           300: '#93c5fd',
           400: '#60a5fa',

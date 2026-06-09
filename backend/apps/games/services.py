@@ -115,33 +115,29 @@ class RawgService:
         return game, created
 
     @staticmethod
-    def fetch_description_async(game_id: int, rawg_id: int):
+    def fetch_description_sync(game_id: int, rawg_id: int):
         api_key = getattr(settings, 'RAWG_API_KEY', '')
         if not api_key:
             return
 
-        def _fetch():
-            try:
-                resp = requests.get(
-                    f'{settings.RAWG_BASE_URL}/games/{rawg_id}',
-                    params={'key': api_key, 'lang': 'ru'},
-                    timeout=5,
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    raw_desc = data.get('description_raw') or ''
-                    html_desc = data.get('description') or ''
-                    desc = raw_desc.strip() if raw_desc else strip_tags(html_desc).strip()
-                    if desc:
-                        Game.objects.filter(pk=game_id).update(description=desc)
-                        logger.info(f'Описание для игры {game_id} успешно обновлено из RAWG.')
-            except requests.Timeout:
-                logger.warning(f'RAWG API не ответил вовремя для игры {game_id} (rawg_id={rawg_id}).')
-            except Exception as e:
-                logger.error(f'Ошибка при получении описания из RAWG для игры {game_id}: {e}')
-
-        thread = threading.Thread(target=_fetch, daemon=True)
-        thread.start()
+        try:
+            resp = requests.get(
+                f'{settings.RAWG_BASE_URL}/games/{rawg_id}',
+                params={'key': api_key, 'lang': 'ru'},
+                timeout=5,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                raw_desc = data.get('description_raw') or ''
+                html_desc = data.get('description') or ''
+                desc = raw_desc.strip() if raw_desc else strip_tags(html_desc).strip()
+                if desc:
+                    Game.objects.filter(pk=game_id).update(description=desc)
+                    logger.info(f'Описание для игры {game_id} успешно обновлено из RAWG.')
+        except requests.Timeout:
+            logger.warning(f'RAWG API не ответил вовремя для игры {game_id} (rawg_id={rawg_id}).')
+        except Exception as e:
+            logger.error(f'Ошибка при получении описания из RAWG для игры {game_id}: {e}')
 
 
 class FileParserService:

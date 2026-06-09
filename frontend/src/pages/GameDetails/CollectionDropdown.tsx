@@ -16,6 +16,7 @@ const CollectionDropdown: React.FC<CollectionDropdownProps> = ({ game, collectio
   const [collectionDropdown, setCollectionDropdown] = useState(false);
   const [addingToCollection, setAddingToCollection] = useState(false);
   const [collectionMsg, setCollectionMsg] = useState('');
+  const [newCollectionName, setNewCollectionName] = useState('');
 
   const handleAddToCollection = async (collectionId: number, name: string) => {
     setAddingToCollection(true); setCollectionDropdown(false);
@@ -93,6 +94,36 @@ const CollectionDropdown: React.FC<CollectionDropdownProps> = ({ game, collectio
                 + {name}
               </button>
             ))}
+            <div className="p-2 border-t" style={{ borderColor: 'var(--border)' }}>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newCollectionName}
+                  onChange={(e) => setNewCollectionName(e.target.value)}
+                  placeholder="Своя коллекция..."
+                  className="w-full text-sm px-2 py-1.5 rounded outline-none"
+                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newCollectionName.trim()) {
+                      createAndAddToCollection(newCollectionName.trim());
+                      setNewCollectionName('');
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    if (newCollectionName.trim()) {
+                      createAndAddToCollection(newCollectionName.trim());
+                      setNewCollectionName('');
+                    }
+                  }}
+                  className="px-2 rounded flex items-center justify-center transition-colors"
+                  style={{ background: 'var(--accent)', color: 'black' }}
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
