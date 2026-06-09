@@ -5,7 +5,7 @@ from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 urlpatterns = [
-    # Django admin
+    # Админка Django
     path('admin/', admin.site.urls),
 
     # Аутентификация и пользователи
@@ -20,13 +20,13 @@ urlpatterns = [
     # Коллекции
     path('api/collections/', include('apps.collections.urls')),
 
-    # OpenAPI схема
+    # Схема OpenAPI
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
 
-    # Swagger UI документация
+    # Документация Swagger UI
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 
-    # ReDoc документация (альтернативная)
+    # Документация ReDoc (альтернативная)
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 

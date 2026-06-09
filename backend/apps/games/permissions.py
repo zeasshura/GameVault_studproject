@@ -13,7 +13,7 @@ class IsAdminOrReadOnly(BasePermission):
     """
 
     def has_permission(self, request, view):
-        # SAFE_METHODS: GET, HEAD, OPTIONS — разрешены всем
+        # Разрешены безопасные методы: GET, HEAD, OPTIONS
         if request.method in SAFE_METHODS:
             return True
 

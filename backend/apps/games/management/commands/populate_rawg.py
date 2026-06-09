@@ -33,7 +33,7 @@ class Command(BaseCommand):
         for page in range(1, pages + 1):
             self.stdout.write(f'Fetching page {page}...')
             try:
-                # Fetch games sorted by rating
+                # Получаем игры, отсортированные по рейтингу
                 response = requests.get(
                     f'{settings.RAWG_BASE_URL}/games',
                     params={
@@ -60,7 +60,7 @@ class Command(BaseCommand):
                 if not rawg_id:
                     continue
                     
-                # Skip if already exists
+                # Пропускаем, если игра уже существует
                 if Game.objects.filter(rawg_id=rawg_id).exists():
                     continue
                     
@@ -69,7 +69,7 @@ class Command(BaseCommand):
                         game = Game.objects.create(
                             rawg_id=rawg_id,
                             title=game_data.get('name', ''),
-                            description='(Описание загружается из RAWG при детальном просмотре)', # List endpoint doesn't return full description
+                            description='(Описание загружается из RAWG при детальном просмотре)', # API списка не возвращает полное описание
                             release_date=game_data.get('released') or None,
                             cover_url=game_data.get('background_image') or None,
                             avg_rating=round(game_data.get('rating', 0.0) * 2, 2),

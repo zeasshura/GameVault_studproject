@@ -14,7 +14,7 @@ const GameCard: React.FC<GameCardProps> = ({ game }) => {
 
   useEffect(() => {
     if (isHovered && videoRef.current) {
-      videoRef.current.play().catch(() => {}); // catch autoplay restrictions
+      videoRef.current.play().catch(() => {}); // Игнорируем ошибки автовоспроизведения
     } else if (!isHovered && videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
@@ -26,9 +26,9 @@ const GameCard: React.FC<GameCardProps> = ({ game }) => {
     : null;
 
   const ratingColor = (r: number) => {
-    if (r >= 8) return '#6dc849';   // green
-    if (r >= 6) return '#f5c518';   // yellow
-    if (r > 0)  return '#ff6347';   // red-orange
+    if (r >= 8) return '#6dc849';   // зеленый
+    if (r >= 6) return '#f5c518';   // желтый
+    if (r > 0)  return '#ff6347';   // красно-оранжевый
     return 'transparent';
   };
 

@@ -1,5 +1,5 @@
 // ============================================================
-// TypeScript Types & Interfaces for GameVault
+// Типы и интерфейсы TypeScript для GameVault
 // ============================================================
 
 export interface User {

@@ -32,6 +32,6 @@ for i, game in enumerate(games, 1):
                 print(f"Updated {updated}/{total}...")
     except Exception as e:
         print(f"Error on {game.rawg_id}: {e}")
-    sleep(0.1)  # Rate limit protection
+    sleep(0.1)  # Защита от rate limit
 
 print("Done updating actual counts from RAWG!")

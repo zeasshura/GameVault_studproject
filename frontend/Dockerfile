@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY package.json package-lock.json* ./
 
+# Remove package-lock.json to avoid architecture mismatch with host (glibc vs musl)
+# and force npm to resolve the correct optional dependencies for Alpine.
 RUN npm install
 
 COPY . .

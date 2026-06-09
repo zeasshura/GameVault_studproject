@@ -7,7 +7,6 @@ from rest_framework.routers import DefaultRouter
 
 from .views import GameViewSet, GenreViewSet, PlatformViewSet
 
-# Роутер автоматически генерирует стандартные CRUD маршруты
 router = DefaultRouter()
 router.register(r'genres', GenreViewSet, basename='genre')
 router.register(r'platforms', PlatformViewSet, basename='platform')
